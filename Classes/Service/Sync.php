@@ -318,7 +318,7 @@ class Tx_Dflsync_Service_Sync {
 	}
 
 	private function getFileName($filename) {
-		$filename = tx_rnbase_util_Files::getFileAbsFileName($filename);
+		$filename = tx_rnbase_util_Files::getFileAbsFileName($filename, FALSE);
 		if(!is_file($filename)) {
 			throw new Exception('File not found: ' . $filename);
 		}
