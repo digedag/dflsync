@@ -58,9 +58,15 @@ class Tx_Dflsync_Service_Sync {
 	private $clubData = array();
 	private $pageUid = 0;
 
+	private $pathMatchStats = '';
+	private $pathMatchInfo = '';
+
 	private $stats = array();
 
-	public function doSync($competitionUid, $fileSaison, $fileClub) {
+	public function doSync($competitionUid, $fileSaison, $fileClub, $pathStats, $pathInfo) {
+		$this->pathMatchInfo = $pathInfo;
+		$this->pathMatchStats= $pathStats;
+
 		$fileSaison = $this->getFileName($fileSaison);
 		$fileClub = $this->getFileName($fileClub);
 		$competition = tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $competitionUid);
@@ -170,6 +176,108 @@ class Tx_Dflsync_Service_Sync {
 		$data[self::TABLE_GAMES][$matchUid]['home'] = $this->findTeam($node->getValueFromPath('HomeTeamId'), $data, $competition);
 		$data[self::TABLE_GAMES][$matchUid]['guest'] = $this->findTeam($node->getValueFromPath('GuestTeamId'), $data, $competition);
 
+		// Ergebnis holen
+		$this->checkMatchStats($data, $matchUid, $dflId);
+		// Zuschauer holen
+		$this->checkMatchInfo($data, $matchUid, $dflId);
+	}
+
+	/**
+	 * Lesen der ggf. vorhandenen Datei für die Spiel-Statistik. Hier befindet sich
+	 * das Ergebnis.
+	 * @param array $data
+	 * @param int $matchUid
+	 * @param string$dflId
+	 */
+	private function checkMatchStats(&$data, $matchUid, $dflId) {
+		$statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $dflId.'.xml');
+		if(!file_exists($statsFile))
+			return;
+
+		// Dateien lesen
+		$reader = new XMLReader();
+		if(!$reader->open($statsFile, 'UTF-8', 0)) {
+			tx_rnbase_util_Logger::fatal('Error reading match stats '.$dflId.'.xml file!', 'dflsync');
+			throw new Exception('Error reading match statistics '.$dflId.'.xml!');
+		}
+		while ($reader->read() && $reader->name !== 'MatchStatistic');
+
+		$doc = new DOMDocument();
+		$found = 0;
+		while ($reader->name === 'MatchStatistic' && $found < 2) {
+			// Wir müssen den Tag mit dem Scope match suchen
+
+			$node = $reader->expand();
+			if ($node === FALSE || !$node instanceof DOMNode) {
+				throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353592747);
+			}
+			/* @var $envNode tx_rnbase_util_XmlElement */
+			$envNode = simplexml_import_dom(
+					$doc->importNode($node, true),
+					'tx_rnbase_util_XmlElement'
+			);
+			$scope = $envNode->getValueFromPath('Scope');
+			if($scope == 'match') {
+				$data[self::TABLE_GAMES][$matchUid]['status'] = 2;
+				if($result = $envNode->getValueFromPath('Result')) {
+					$result = tx_rnbase_util_Strings::intExplode(':', $result);
+					$data[self::TABLE_GAMES][$matchUid]['goals_home_2'] = $result[0];
+					$data[self::TABLE_GAMES][$matchUid]['goals_guest_2'] = $result[1];
+				}
+				$found++;
+			}
+			elseif($scope == 'firstHalf') {
+				// Halbzeitergebnis
+				if($result = $envNode->getValueFromPath('Result')) {
+					$result = tx_rnbase_util_Strings::intExplode(':', $result);
+					$data[self::TABLE_GAMES][$matchUid]['goals_home_1'] = $result[0];
+					$data[self::TABLE_GAMES][$matchUid]['goals_guest_1'] = $result[1];
+				}
+				$found++;
+			}
+			$reader->next('MatchStatistic');
+		}
+		$reader->close();
+	}
+
+
+	/**
+	 * Lesen der ggf. vorhandenen Datei für die MatchInfo
+	 * @param array $data
+	 * @param int $matchUid
+	 * @param string$dflId
+	 */
+	private function checkMatchInfo(&$data, $matchUid, $dflId) {
+		$infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $dflId.'.xml');
+		if(!file_exists($infoFile))
+			return;
+
+		// Dateien lesen
+		$reader = new XMLReader();
+		if(!$reader->open($infoFile, 'UTF-8', 0)) {
+			tx_rnbase_util_Logger::fatal('Error reading match info '.$dflId.'.xml file!', 'dflsync');
+			throw new Exception('Error reading match information '.$dflId.'.xml!');
+		}
+		while ($reader->read() && $reader->name !== 'Environment');
+
+		$doc = new DOMDocument();
+		if ($reader->name === 'Environment') {
+			// Hier wird nur ein Tag ausgelesen
+			$node = $reader->expand();
+			if ($node === FALSE || !$node instanceof DOMNode) {
+				throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353593847);
+			}
+			/* @var $envNode tx_rnbase_util_XmlElement */
+			$envNode = simplexml_import_dom(
+					$doc->importNode($node, true),
+					'tx_rnbase_util_XmlElement'
+			);
+			$visitors = $envNode->getIntFromPath('NumberOfSpectators');
+			if($visitors > 0) {
+				$data[self::TABLE_GAMES][$matchUid]['visitors'] = $visitors;
+			}
+		}
+		$reader->close();
 	}
 	/**
 	 * Liefert die UID des Teams, oder einen NEW_-Key

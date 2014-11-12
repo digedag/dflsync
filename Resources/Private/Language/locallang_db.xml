@@ -10,6 +10,8 @@
 			<label index="scheduler_syncTask_field_competition">UID des Wettbewerbs</label>
 			<label index="scheduler_syncTask_field_fileClub">DFL-Datei Clubs</label>
 			<label index="scheduler_syncTask_field_fileSaison">DFL-Datei Saison</label>
+			<label index="scheduler_syncTask_field_pathMatchInfo">Verzeichnis Spielinformationen</label>
+			<label index="scheduler_syncTask_field_pathMatchStats">Verzeichnis Spielstatistik</label>
 
 
 		</languageKey>

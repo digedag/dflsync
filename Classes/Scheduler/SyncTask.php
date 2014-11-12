@@ -26,7 +26,7 @@ require_once t3lib_extMgm::extPath('rn_base') . 'class.tx_rnbase.php';
 //require_once t3lib_extMgm::extPath('scheduler', 'class.tx_scheduler_task.php');
 
 /**
- * 
+ *
  */
 class Tx_Dflsync_Scheduler_SyncTask extends tx_scheduler_Task {
 
@@ -38,7 +38,9 @@ class Tx_Dflsync_Scheduler_SyncTask extends tx_scheduler_Task {
 	private $competition;
 	private $fileSaison;
 	private $fileClub;
-	
+	private $pathMatchStats;
+	private $pathMatchInfo;
+
 	/**
 	 * Function executed from the Scheduler.
 	 * Sends an email
@@ -50,7 +52,7 @@ class Tx_Dflsync_Scheduler_SyncTask extends tx_scheduler_Task {
 
 		try {
 			$sync = tx_rnbase::makeInstance('Tx_Dflsync_Service_Sync');
-			$sync->doSync($this->competition, $this->fileSaison, $this->fileClub);
+			$sync->doSync($this->competition, $this->fileSaison, $this->fileClub, $this->pathMatchStats, $this->pathMatchInfo);
 		} catch (Exception $e) {
 			tx_rnbase_util_Logger::fatal('Task failed!', 'dflsync', array('Exception' => $e->getMessage()));
 			//Da die Exception gefangen wird, würden die Entwickler keine Mail bekommen
@@ -61,7 +63,7 @@ class Tx_Dflsync_Scheduler_SyncTask extends tx_scheduler_Task {
 			}
 			$success = false;
 		}
-			
+
 		return $success;
 	}
 
@@ -72,7 +74,7 @@ class Tx_Dflsync_Scheduler_SyncTask extends tx_scheduler_Task {
 	public function getCompetition() {
 		return $this->competition;
 	}
-	
+
 	/**
 	 * Set amount of items
 	 *
@@ -97,14 +99,41 @@ class Tx_Dflsync_Scheduler_SyncTask extends tx_scheduler_Task {
 	public function setFileSaison($val) {
 		$this->fileSaison = $val;
 	}
-	
+	/**
+	 * Das Verzeichnis mit den Dateien für die Spielinformationen
+	 * DFL-MAT-0002MV.xml
+	 */
+	public function getPathMatchInfo() {
+		return $this->pathMatchInfo;
+	}
+	public function setPathMatchInfo($val) {
+		$this->pathMatchInfo = $val;
+	}
+	/**
+	 * Das Verzeichnis mit den Dateien für die Spielstatistik
+	 * DFL-MAT-0002MV.xml
+	 */
+	public function getPathMatchStats() {
+		return $this->pathMatchStats;
+	}
+	public function setPathMatchStats($val) {
+		$this->pathMatchStats = $val;
+	}
+
 	/**
 	 * This method returns the destination mail address as additional information
 	 *
 	 * @return	string	Information to display
 	 */
 	public function getAdditionalInformation() {
-		return 'Aktualisierung DFL-Daten';
+		$compName = '';
+
+		if($compUid = $this->getCompetition()) {
+			$competition = tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $compUid);
+			$compName = $competition->isValid() ? $competition->getName() : '[invalid!]';
+		}
+
+		return sprintf('Aktualisierung DFL-Daten für Wettbewerb >%s<', $compName);
 // 		return sprintf(	$GLOBALS['LANG']->sL('LLL:EXT:mksearch/locallang_db.xml:scheduler_indexTask_taskinfo'),
 // 			$this->getTargetPath(), $this->getItemsInQueue());
 	}
