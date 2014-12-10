@@ -102,7 +102,7 @@ class Tx_Dflsync_Service_Sync {
 			try {
 				$node = $reader->expand();
 				if ($node === FALSE || !$node instanceof DOMNode) {
-					throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
+					throw new LogicException('The current DOMNode PlayingSchedule is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
 				}
 				/* @var $matchNode tx_rnbase_util_XmlElement */
 				$matchNode = simplexml_import_dom(
@@ -123,7 +123,7 @@ class Tx_Dflsync_Service_Sync {
 				}
 			}
 			catch(Exception $e) {
-				tx_rnbase_util_Logger::fatal('Error reading PlayingSchedule!', 'dflsync');
+				tx_rnbase_util_Logger::fatal('Error reading PlayingSchedule!', 'dflsync', array('msg'=>$e->getMessage()));
 			}
 			$reader->next('PlayingSchedule');
 		}
@@ -209,7 +209,7 @@ class Tx_Dflsync_Service_Sync {
 
 			$node = $reader->expand();
 			if ($node === FALSE || !$node instanceof DOMNode) {
-				throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353592747);
+				throw new LogicException('The current DOMNode MatchStatistic is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353592747);
 			}
 			/* @var $envNode tx_rnbase_util_XmlElement */
 			$envNode = simplexml_import_dom(
@@ -265,7 +265,7 @@ class Tx_Dflsync_Service_Sync {
 			// Hier wird nur ein Tag ausgelesen
 			$node = $reader->expand();
 			if ($node === FALSE || !$node instanceof DOMNode) {
-				throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353593847);
+				throw new LogicException('The current DOMNode Environment is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
 			}
 			/* @var $envNode tx_rnbase_util_XmlElement */
 			$envNode = simplexml_import_dom(

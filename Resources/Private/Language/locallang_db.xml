@@ -13,6 +13,9 @@
 			<label index="scheduler_syncTask_field_pathMatchInfo">Verzeichnis Spielinformationen</label>
 			<label index="scheduler_syncTask_field_pathMatchStats">Verzeichnis Spielstatistik</label>
 
+			<label index="scheduler_syncTask_field_pathClubInfo">Verzeichnis Vereinsinformationen</label>
+			<label index="scheduler_syncTask_field_pidOwn">SysFolder Personen eigener Verein</label>
+			<label index="scheduler_syncTask_field_pidOther">SysFolder Personen anderer Vereine</label>
 
 		</languageKey>
 		<languageKey index="de" type="array">
