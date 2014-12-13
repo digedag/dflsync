@@ -163,9 +163,8 @@ class Tx_Dflsync_Service_ProfileImport {
 						array('file' => $feedFile));
 			return;
 		}
-		//Spieler aus der Datei lesen
-		$dflProfiles = $this->readProfiles($feedFile);
-		// Neue Spieler zuordnen
+
+		// Spieler aus Team einlesen
 		$profileMap = array();
 		$profiles = $team->getPlayers();
 		foreach ($profiles As $profile) {
@@ -173,15 +172,29 @@ class Tx_Dflsync_Service_ProfileImport {
 				$profileMap[$profile->getExtid()] = $profile->getUid();
 		}
 
+		//Spieler aus der Datei lesen
+		$dflProfiles = $this->readProfiles($feedFile);
+
+		// Fehlende Spieler suchen
 		$newPlayerIds = array();
 		foreach ($dflProfiles As $dflProfile) {
 			if(array_key_exists($dflProfile['extid'], $profileMap)) {
-				continue;
+				continue; // Ist schon im Team
 			}
-			$newPlayerIds[] = 'NEW_'.$dflProfile['extid'];
-			unset($dflProfile['type']);
-			$data[self::TABLE_PROFILES]['NEW_'.$dflProfile['extid']] = $dflProfile;
-			$data[self::TABLE_PROFILES]['NEW_'.$dflProfile['extid']]['pid'] = $pid;
+			// Der Spieler ist noch nicht im Team
+			$newPlayerId = 'NEW_'.$dflProfile['extid'];
+			// Gibt es in schon in der Datenbank?
+			$existingPlayerUid = $this->findPlayerByDflId($dflProfile['extid']);
+			if($existingPlayerUid) {
+				$newPlayerId = $existingPlayerUid;
+			}
+			else {
+				// Spieler neu anlegen
+				unset($dflProfile['type']);
+				$data[self::TABLE_PROFILES][$newPlayerId] = $dflProfile;
+				$data[self::TABLE_PROFILES][$newPlayerId]['pid'] = $pid;
+			}
+			$newPlayerIds[] = $newPlayerId;
 		}
 		if(!empty($newPlayerIds)) {
 			// Im Team zuordnen
@@ -193,6 +206,19 @@ class Tx_Dflsync_Service_ProfileImport {
 		}
 	}
 
+	/**
+	 *
+	 * @param string $dflId
+	 * @return int or NULL
+	 */
+	protected function findPlayerByDflId($dflId) {
+		$srv = tx_cfcleague_util_ServiceRegistry::getProfileService();
+		$fields = array();
+		$fields['PROFILE.EXTID'][OP_EQ_NOCASE] = $dflId;
+		$options = array('what' => 'uid');
+		$ret = $srv->search($fields, $options);
+		return empty($ret) ? NULL : $ret[0]['uid'];
+	}
 	/**
 	 * Liest ein XML ein
 	 * @param string $file
