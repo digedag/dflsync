@@ -109,10 +109,12 @@ class Tx_Dflsync_Service_Sync {
 						'tx_rnbase_util_XmlElement'
 				);
 				// Es interessieren hier nur die Spiele ohne das Attribut ValidTo
-				if($matchNode->getValueFromPath('CompetitionId') == 'DFL-COM-000002'
+				$dflCompetitionId = $matchNode->getValueFromPath('CompetitionId');
+				// todo: das muss als parameter kommen...
+				if($dflCompetitionId == 'DFL-COM-000002'
 						&& !$matchNode->hasValueForPath('ValidTo')) {
 					$cnt++;
-					$this->handleMatch($data, $matchNode, $competition, $info);
+					$this->handleMatch($data, $matchNode, $competition, $dflCompetitionId, $info);
 					if($cnt % 120 == 0) {
 						// Speichern
 						$this->persist($data);
@@ -152,7 +154,15 @@ class Tx_Dflsync_Service_Sync {
 		$data[self::TABLE_GAMES] = array();
 		$data[self::TABLE_COMPETITION] = array();
 	}
-	private function handleMatch(&$data, tx_rnbase_util_XmlElement $node, $competition, &$info) {
+	/**
+	 *
+	 * @param array $data
+	 * @param tx_rnbase_util_XmlElement $node
+	 * @param tx_cfcleague_models_Competition $competition
+	 * @param string $dflCompetitionId
+	 * @param array $info
+	 */
+	private function handleMatch(&$data, tx_rnbase_util_XmlElement $node, $competition, $dflCompetitionId, &$info) {
 		// Das Spiel suchen und ggf. anlegen
 		$dflId = $node->getValueFromPath('MatchId');
 		$matchUid = 'NEW_'.$dflId;
@@ -176,9 +186,9 @@ class Tx_Dflsync_Service_Sync {
 		$data[self::TABLE_GAMES][$matchUid]['guest'] = $this->findTeam($node->getValueFromPath('GuestTeamId'), $data, $competition);
 
 		// Ergebnis holen
-		$this->checkMatchStats($data, $matchUid, $dflId);
+		$this->checkMatchStats($data, $matchUid, $dflId, $dflCompetitionId);
 		// Zuschauer holen
-		$this->checkMatchInfo($data, $matchUid, $dflId);
+		$this->checkMatchInfo($data, $matchUid, $dflId, $dflCompetitionId);
 	}
 
 	/**
@@ -186,13 +196,16 @@ class Tx_Dflsync_Service_Sync {
 	 * das Ergebnis.
 	 * @param array $data
 	 * @param int $matchUid
-	 * @param string$dflId
+	 * @param string $dflId
+	 * @param string $dflCompetitionId
 	 */
-	private function checkMatchStats(&$data, $matchUid, $dflId) {
-		$prefix = 'DFL_03_03_events_matchstatistics_periods_DFL-COM-000002_';
+	private function checkMatchStats(&$data, $matchUid, $dflId, $dflCompetitionId) {
+		$prefix = 'DFL_03_03_events_matchstatistics_periods_'.$dflCompetitionId.'_';
 		$statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
-		if(!file_exists($statsFile))
+		if(!file_exists($statsFile)) {
+			//tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without stats file!', 'dflsync', array('file'=>$statsFile));
 			return;
+		}
 
 		// Dateien lesen
 		$reader = new XMLReader();
@@ -247,10 +260,11 @@ class Tx_Dflsync_Service_Sync {
 	 * @param int $matchUid
 	 * @param string$dflId
 	 */
-	private function checkMatchInfo(&$data, $matchUid, $dflId) {
-		$prefix = 'DFL_02_01_matchinformation_DFL-COM-000002_';
+	private function checkMatchInfo(&$data, $matchUid, $dflId, $dflCompetitionId) {
+		$prefix = 'DFL_02_01_matchinformation_'.$dflCompetitionId.'_';
 		$infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
 		if(!file_exists($infoFile))
+			//tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without matchinfo file!', 'dflsync', array('file'=>$infoFile));
 			return;
 
 		// Dateien lesen
