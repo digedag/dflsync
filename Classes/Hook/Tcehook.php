@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2014 Rene Nitzsche <rene@system25.de>
+*  (c) 2014-2016 Rene Nitzsche <rene@system25.de>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -22,7 +22,6 @@
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
-require_once(t3lib_extMgm::extPath('cfc_league') . 'class.tx_cfcleague_db.php');
 
 class Tx_Dflsync_Hook_Tcehook {
 
@@ -55,11 +54,9 @@ class Tx_Dflsync_Hook_Tcehook {
 					if($itemUid) $itemUids[] = $itemUid;
 				}
 				$itemUids = array_unique($itemUids);
-				$incomingFieldArray[$profileType] = implode($itemUids, ',');
+				$incomingFieldArray['teams'] = implode($itemUids, ',');
 
 			}
 		}
 	}
-
-
 }
