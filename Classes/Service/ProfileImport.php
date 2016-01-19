@@ -62,6 +62,14 @@ class Tx_Dflsync_Service_ProfileImport {
 
 	private $stats = array();
 
+	/**
+	 * Start synchronization of profiles in given competition
+	 *
+	 * @param int $competitionUid
+	 * @param string $pathInfo
+	 * @param int $pidOwn
+	 * @param int $pidOther
+	 */
 	public function doImport($competitionUid, $pathInfo, $pidOwn, $pidOther) {
 		$this->pathClubInfo = $pathInfo;
 		$this->pageOwn = $pidOwn;
@@ -109,7 +117,8 @@ class Tx_Dflsync_Service_ProfileImport {
 	 * @param string$dflId
 	 */
 	private function checkCoaches(&$data, $team, $dflId, $pid) {
-		$feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $dflId.'_TEAMOFFICIAL.xml');
+		$prefix = 'DFL_01_05_masterdata_';
+		$feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix.$dflId.'_teamofficial.xml');
 		if(!file_exists($feedFile)) {
 			tx_rnbase_util_Logger::notice('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No officials feed file found.', 'dflsync',
 			array('file' => $feedFile));
@@ -156,7 +165,8 @@ class Tx_Dflsync_Service_ProfileImport {
 	 * @param string$dflId
 	 */
 	private function checkPlayers(&$data, $team, $dflId, $pid) {
-		$feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $dflId.'_PLAYER.xml');
+		$prefix = 'DFL_01_05_masterdata_';
+		$feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix.$dflId.'_player.xml');
 		if(!file_exists($feedFile)) {
 			tx_rnbase_util_Logger::notice('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No player feed file found.', 'dflsync',
 						array('file' => $feedFile));
