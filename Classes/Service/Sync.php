@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2014 Rene Nitzsche (rene@system25.de)
+*  (c) 2014-2016 Rene Nitzsche (rene@system25.de)
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -23,7 +23,6 @@
 ***************************************************************/
 
 
-require_once(t3lib_extMgm::extPath('rn_base') . 'class.tx_rnbase.php');
 tx_rnbase::load('tx_rnbase_util_Logger');
 tx_rnbase::load('tx_rnbase_util_Files');
 tx_rnbase::load('tx_rnbase_util_XmlElement');
@@ -190,7 +189,8 @@ class Tx_Dflsync_Service_Sync {
 	 * @param string$dflId
 	 */
 	private function checkMatchStats(&$data, $matchUid, $dflId) {
-		$statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $dflId.'.xml');
+		$prefix = 'DFL_03_03_events_matchstatistics_periods_DFL-COM-000002_';
+		$statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
 		if(!file_exists($statsFile))
 			return;
 
@@ -248,7 +248,8 @@ class Tx_Dflsync_Service_Sync {
 	 * @param string$dflId
 	 */
 	private function checkMatchInfo(&$data, $matchUid, $dflId) {
-		$infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $dflId.'.xml');
+		$prefix = 'DFL_02_01_matchinformation_DFL-COM-000002_';
+		$infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
 		if(!file_exists($infoFile))
 			return;
 
@@ -265,7 +266,7 @@ class Tx_Dflsync_Service_Sync {
 			// Hier wird nur ein Tag ausgelesen
 			$node = $reader->expand();
 			if ($node === FALSE || !$node instanceof DOMNode) {
-				throw new LogicException('The current DOMNode Environment is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
+				throw new LogicException('The current DOMNode Environment is invalid. File ['.$infoFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
 			}
 			/* @var $envNode tx_rnbase_util_XmlElement */
 			$envNode = simplexml_import_dom(
@@ -290,6 +291,7 @@ class Tx_Dflsync_Service_Sync {
 			// Das Team ist noch nicht im Cache, also in der DB suchen
 			/* @var $teamSrv tx_cfcleague_services_Teams */
 			$teamSrv = tx_cfcleague_util_ServiceRegistry::getTeamService();
+			$fields = array();
 			$fields['TEAM.EXTID'][OP_EQ_NOCASE] = $dflId;
 			$options = array(
 					'what' => 'uid',

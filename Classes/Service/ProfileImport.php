@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2014 Rene Nitzsche (rene@system25.de)
+*  (c) 2014-2016 Rene Nitzsche (rene@system25.de)
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -23,7 +23,6 @@
 ***************************************************************/
 
 
-require_once(t3lib_extMgm::extPath('rn_base') . 'class.tx_rnbase.php');
 tx_rnbase::load('tx_rnbase_util_Logger');
 tx_rnbase::load('tx_rnbase_util_Files');
 tx_rnbase::load('tx_rnbase_util_XmlElement');
