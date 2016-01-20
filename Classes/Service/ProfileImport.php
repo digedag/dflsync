@@ -103,6 +103,8 @@ class Tx_Dflsync_Service_ProfileImport {
 		$club = $team->getClub();
 		$pid = $club != null && $club->isFavorite() ? $this->pageOwn : $this->pageOther;
 
+		if($pid == 0) return;
+
 		$this->checkPlayers($data, $team, $dflId, $pid);
 		$this->checkCoaches($data, $team, $dflId, $pid);
 
