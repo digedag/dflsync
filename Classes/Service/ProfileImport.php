@@ -24,7 +24,6 @@
 tx_rnbase::load('tx_rnbase_util_Logger');
 tx_rnbase::load('tx_rnbase_util_Files');
 tx_rnbase::load('tx_rnbase_util_XmlElement');
-tx_rnbase::load('tx_rnbase_util_Strings');
 
 /**
  */
@@ -169,8 +168,8 @@ class Tx_Dflsync_Service_ProfileImport
         }
         if (! empty($newProfileIds)) {
             // Im Team zuordnen
-            if ($team->record['coaches'])
-                $data[self::TABLE_TEAMS][$team->getUid()]['coaches'] = $team->record['coaches'] . ',' . implode(',', $newProfileIds);
+            if ($team->getProperty('coaches'))
+                $data[self::TABLE_TEAMS][$team->getUid()]['coaches'] = $team->getProperty('coaches') . ',' . implode(',', $newProfileIds);
             else
                 $data[self::TABLE_TEAMS][$team->getUid()]['coaches'] = implode(',', $newProfileIds);
         }
@@ -229,8 +228,8 @@ class Tx_Dflsync_Service_ProfileImport
         }
         if (! empty($newPlayerIds)) {
             // Im Team zuordnen
-            if ($team->record['players'])
-                $data[self::TABLE_TEAMS][$team->getUid()]['players'] = $team->record['players'] . ',' . implode(',', $newPlayerIds);
+            if ($team->getProperty('players'))
+                $data[self::TABLE_TEAMS][$team->getUid()]['players'] = $team->getProperty('players') . ',' . implode(',', $newPlayerIds);
             else
                 $data[self::TABLE_TEAMS][$team->getUid()]['players'] = implode(',', $newPlayerIds);
         }
@@ -300,7 +299,7 @@ class Tx_Dflsync_Service_ProfileImport
     {
         $start = microtime(TRUE);
 
-        $tce = tx_rnbase_util_DB::getTCEmain($data);
+        $tce = Tx_Rnbase_Database_Connection::getInstance()->getTCEmain($data);
         $tce->process_datamap();
 
         $this->stats['chunks'][]['time'] = intval(microtime(true) - $start) . 's';
