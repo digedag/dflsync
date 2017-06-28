@@ -369,6 +369,12 @@ class Tx_Dflsync_Service_Sync {
 
 	}
 
+	/**
+	 * Befüllt die Instanzvariablen teamData und clubData
+	 * @param string $fileClub
+	 * @throws Exception
+	 * @throws LogicException
+	 */
 	private function initXmlTeams($fileClub) {
 		$reader = new XMLReader();
 		if(!$reader->open($fileClub, 'UTF-8', 0)) {
