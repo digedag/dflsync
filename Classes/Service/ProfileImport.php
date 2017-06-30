@@ -133,8 +133,9 @@ class Tx_Dflsync_Service_ProfileImport
      */
     private function checkCoaches(&$data, $team, $dflId, $pid)
     {
-        $prefix = 'DFL_01_05_masterdata_';
-        $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
+//         $prefix = 'DFL_01_05_masterdata_';
+//         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
+        $feedFile = sprintf($this->pathClubInfo, $dflId, 'teamofficial');
         if (! file_exists($feedFile)) {
             tx_rnbase_util_Logger::notice('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No officials feed file found.', 'dflsync', array(
                 'file' => $feedFile
@@ -186,8 +187,9 @@ class Tx_Dflsync_Service_ProfileImport
      */
     private function checkPlayers(&$data, $team, $dflId, $pid)
     {
-        $prefix = 'DFL_01_05_masterdata_';
-        $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_player.xml');
+//         $prefix = 'DFL_01_05_masterdata_';
+//         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_player.xml');
+        $feedFile = sprintf($this->pathClubInfo, $dflId, 'player');
         if (! file_exists($feedFile)) {
             tx_rnbase_util_Logger::notice('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No player feed file found.', 'dflsync', array(
                 'file' => $feedFile
