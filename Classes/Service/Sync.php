@@ -126,7 +126,7 @@ class Tx_Dflsync_Service_Sync
                 if ($dflCompetitionId == 'DFL-COM-000002' && ! $matchNode->hasValueForPath('ValidTo')) {
                     $cnt ++;
                     $this->handleMatch($data, $matchNode, $competition, $dflCompetitionId, $info);
-                    if ($cnt % 50 == 0) {
+                    if ($cnt % 40 == 0) {
                         // Speichern
                         $this->persist($data);
                         // Wettbewerb neu laden, da ggf. neue Teams drin stehen
@@ -316,6 +316,8 @@ class Tx_Dflsync_Service_Sync
      * Liefert die UID des Teams, oder einen NEW_-Key
      *
      * @param string $dflId
+     * @param [] $data
+     * @param tx_cfcleague_models_Competition $competition
      * @return string
      */
     private function findTeam($dflId, &$data, $competition)
@@ -327,8 +329,10 @@ class Tx_Dflsync_Service_Sync
             $teamSrv = tx_cfcleague_util_ServiceRegistry::getTeamService();
             $fields = array();
             $fields['TEAM.EXTID'][OP_EQ_NOCASE] = $dflId;
+            $fields['TEAM.PID'][OP_EQ_INT] = $competition->getPid();
+
             $options = array(
-                'what' => 'uid'
+                'what' => 'uid',
             );
             $ret = $teamSrv->searchTeams($fields, $options);
             if (! empty($ret)) {
@@ -353,6 +357,10 @@ class Tx_Dflsync_Service_Sync
 
     /**
      * Stellt sicher, daß das Team im Wettbewerb gespeichert wird.
+     * Hier gibt es aber noch ein Todo: es wird nicht geprüft, ob die neue ID schon
+     * in den TCE-Data liegt. Dadurch wird so mehrfach hinzugefügt. Das hat aber praktisch
+     * keine Auswirkung, da die TCE das selbst korrigiert. Das könnte sich zukünftig aber
+     * ändern...
      *
      * @param mixed $teamUid
      * @param array $data
@@ -365,8 +373,9 @@ class Tx_Dflsync_Service_Sync
             $teamUids = array_flip(Tx_Rnbase_Utility_Strings::trimExplode(',', $competition->getProperty('teams')));
             $add = ! (array_key_exists($teamUid, $teamUids));
         }
-        if (! $add)
+        if (! $add) {
             return;
+        }
         // Das geht bestimmt auch kürzer...
         // Das Team in den Wettbewerb legen
         if (isset($data[self::TABLE_COMPETITION][$competition->getUid()]['teams'])) {
@@ -376,13 +385,11 @@ class Tx_Dflsync_Service_Sync
             if ($competition->getProperty('teams')) {
                 $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] = $competition->getProperty('teams');
                 $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] .= ',' . $teamUid;
-            } else
+            }
+            else {
                 $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] = $teamUid;
+            }
         }
-        tx_rnbase_util_Logger::info('Team with id ' . $teamUid . ' added to competition', 'dflsync', array(
-            'competition' => $competition->getUid(),
-            'existing' => $competition->getProperty('teams')
-        ));
     }
 
     private function loadTeamData($dflId)
