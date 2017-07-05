@@ -111,8 +111,13 @@ class Tx_Dflsync_Service_ProfileImport
         $club = $team->getClub();
         $pid = $club != null && $club->isFavorite() ? $this->pageOwn : $this->pageOther;
 
-        if ($pid == 0)
+        if ($pid == 0) {
+            tx_rnbase_util_Logger::notice('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No PID configured.', 'dflsync', array(
+                'pageOwn' => $this->pageOwn,
+                'pageOther' => $this->pageOther,
+            ));
             return;
+        }
 
         $this->checkPlayers($data, $team, $dflId, $pid);
         $this->checkCoaches($data, $team, $dflId, $pid);
@@ -137,7 +142,7 @@ class Tx_Dflsync_Service_ProfileImport
 //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'teamofficial');
         if (! file_exists($feedFile)) {
-            tx_rnbase_util_Logger::notice('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No officials feed file found.', 'dflsync', array(
+            tx_rnbase_util_Logger::warn('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No officials feed file found.', 'dflsync', array(
                 'file' => $feedFile
             ));
             return;
@@ -145,7 +150,7 @@ class Tx_Dflsync_Service_ProfileImport
 
         // Person aus der Datei lesen
         $dflProfiles = $this->readProfiles($feedFile);
-        // Neue Spieler zuordnen
+        // Neue Trainer zuordnen
         $profileMap = array();
         $profiles = $team->getCoaches();
         foreach ($profiles as $profile) {
@@ -159,7 +164,7 @@ class Tx_Dflsync_Service_ProfileImport
                 continue;
             }
             // Nur Trainer übernehmen
-            if ($dflProfile['type'] != 'TRAINER' && $dflProfile['type'] != 'COTRAINER') {
+            if (!$this->isCoach($dflProfile['type'])) {
                 continue;
             }
             unset($dflProfile['type']);
@@ -174,6 +179,14 @@ class Tx_Dflsync_Service_ProfileImport
             else
                 $data[self::TABLE_TEAMS][$team->getUid()]['coaches'] = implode(',', $newProfileIds);
         }
+    }
+    protected function isCoach($type)
+    {
+        $coachTypes = [
+            'headcoach',
+            'assistantHeadcoach',
+        ];
+        return in_array($type, $coachTypes);
     }
 
     /**
@@ -191,7 +204,7 @@ class Tx_Dflsync_Service_ProfileImport
 //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_player.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'player');
         if (! file_exists($feedFile)) {
-            tx_rnbase_util_Logger::notice('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No player feed file found.', 'dflsync', array(
+            tx_rnbase_util_Logger::warn('Ignore team ' . $team->getNameShort() . ' (' . $team->getUid() . ')! No player feed file found.', 'dflsync', array(
                 'file' => $feedFile
             ));
             return;
