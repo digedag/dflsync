@@ -15,5 +15,3 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['scheduler']['tasks']['Tx_Dflsync_Sche
 		'additionalFields' => 'Tx_Dflsync_Scheduler_ProfileTaskAddFieldProvider'
 );
 
-$GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['processDatamapClass'][] = 'EXT:' . $_EXTKEY . '/Classes/Hook/Tcehook.php:Tx_Dflsync_Hook_Tcehook';
-
