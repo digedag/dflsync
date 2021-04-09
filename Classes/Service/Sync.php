@@ -75,7 +75,7 @@ class Tx_Dflsync_Service_Sync
         $fileSaison = $this->getFileName($fileSaison);
         $fileClub = $this->getFileName($fileClub);
         $competition = tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $competitionUid);
-        $this->pageUid = $competition->record['pid'];
+        $this->pageUid = $competition->getProperty('pid');
         $this->initMatches($competition);
 
         // Dateien lesen
