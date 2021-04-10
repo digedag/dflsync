@@ -2,7 +2,7 @@ T3sports DFLSYNC
 ================
 
 ![TYPO3 compatibility](https://img.shields.io/badge/TYPO3-8.7-green?maxAge=3600&style=flat-square&logo=typo3)
-<a href="https://github.com/digedag/dfbsync"><img src="ext_icon.svg" width="20"></a>
+<a href="https://github.com/digedag/dflsync"><img src="ext_icon.svg" width="20"></a>
 [![Latest Stable Version](https://img.shields.io/packagist/v/digedag/dflsync.svg?maxAge=3600)](https://packagist.org/packages/digedag/dflsync)
 [![Code Style](https://github.com/digedag/dflsync/actions/workflows/php.yaml/badge.svg)](https://github.com/digedag/dflsync/actions/workflows/php.yaml)
 [![Total Downloads](https://img.shields.io/packagist/dt/digedag/dflsync.svg?maxAge=3600)](https://packagist.org/packages/digedag/dflsync)
