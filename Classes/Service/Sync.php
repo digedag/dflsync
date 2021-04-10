@@ -26,11 +26,8 @@ tx_rnbase::load('tx_rnbase_util_Files');
 tx_rnbase::load('tx_rnbase_util_XmlElement');
 tx_rnbase::load('Tx_Rnbase_Utility_Strings');
 
-/**
- */
 class Tx_Dflsync_Service_Sync
 {
-
     const TABLE_GAMES = 'tx_cfcleague_games';
 
     const TABLE_TEAMS = 'tx_cfcleague_teams';
@@ -40,24 +37,24 @@ class Tx_Dflsync_Service_Sync
     const TABLE_COMPETITION = 'tx_cfcleague_competition';
 
     /**
-     * Key ist DFL-ID, value ist T3-UID
+     * Key ist DFL-ID, value ist T3-UID.
      */
-    private $teamMap = array();
+    private $teamMap = [];
 
     /**
-     * Key ist DFL-ID, value ist T3-UID
+     * Key ist DFL-ID, value ist T3-UID.
      */
-    private $matchMap = array();
+    private $matchMap = [];
 
     /**
-     * Daten aus dem XML für die Teams
+     * Daten aus dem XML für die Teams.
      */
-    private $teamData = array();
+    private $teamData = [];
 
     /**
-     * Daten aus dem XML für die Vereine
+     * Daten aus dem XML für die Vereine.
      */
-    private $clubData = array();
+    private $clubData = [];
 
     private $pageUid = 0;
 
@@ -65,7 +62,7 @@ class Tx_Dflsync_Service_Sync
 
     private $pathMatchInfo = '';
 
-    private $stats = array();
+    private $stats = [];
 
     public function doSync($competitionUid, $fileSaison, $fileClub, $pathStats, $pathInfo)
     {
@@ -80,53 +77,53 @@ class Tx_Dflsync_Service_Sync
 
         // Dateien lesen
         $reader = new XMLReader();
-        if (! $reader->open($fileSaison, 'UTF-8', 0)) {
+        if (!$reader->open($fileSaison, 'UTF-8', 0)) {
             tx_rnbase_util_Logger::fatal('Error reading match schedule xml string!', 'dflsync', $fileSaison);
             throw new Exception('Error reading xml string!');
         }
-        while ($reader->read() && $reader->name !== 'Fixture');
+        while ($reader->read() && 'Fixture' !== $reader->name);
 
         // Jetzt die Teams aus dem XML einlesen
         $this->initXmlTeams($fileClub);
 
-        $start = microtime(TRUE);
+        $start = microtime(true);
         $cnt = 0;
-        $info = array(
-            'match' => array(
+        $info = [
+            'match' => [
                 'new' => 0,
-                'updated' => 0
-            ),
-            'team' => array(
+                'updated' => 0,
+            ],
+            'team' => [
                 'new' => 0,
-                'updated' => 0
-            ),
-            'stadium' => array(
+                'updated' => 0,
+            ],
+            'stadium' => [
                 'new' => 0,
-                'updated' => 0
-            )
-        );
-        $data = array(
-            self::TABLE_TEAMS => array(),
-            self::TABLE_STADIUMS => array(),
-            self::TABLE_GAMES => array(),
-            self::TABLE_COMPETITION => array()
-        );
+                'updated' => 0,
+            ],
+        ];
+        $data = [
+            self::TABLE_TEAMS => [],
+            self::TABLE_STADIUMS => [],
+            self::TABLE_GAMES => [],
+            self::TABLE_COMPETITION => [],
+        ];
         $doc = new DOMDocument();
-        while ($reader->name === 'Fixture') {
+        while ('Fixture' === $reader->name) {
             try {
                 $node = $reader->expand();
-                if ($node === FALSE || ! $node instanceof DOMNode) {
-                    throw new LogicException('The current DOMNode Fixture is invalid. Last error: ' . print_r(error_get_last(), true), 1353594857);
+                if (false === $node || !$node instanceof DOMNode) {
+                    throw new LogicException('The current DOMNode Fixture is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
                 }
                 /* @var $matchNode tx_rnbase_util_XmlElement */
                 $matchNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
                 // Es interessieren hier nur die Spiele ohne das Attribut ValidTo
                 $dflCompetitionId = $matchNode->getValueFromPath('CompetitionId');
                 // TODO: das muss als parameter kommen... jetzt fix 2. BL
-                if ($dflCompetitionId == 'DFL-COM-000002' && ! $matchNode->hasValueForPath('ValidTo')) {
-                    $cnt ++;
+                if ('DFL-COM-000002' == $dflCompetitionId && !$matchNode->hasValueForPath('ValidTo')) {
+                    ++$cnt;
                     $this->handleMatch($data, $matchNode, $competition, $dflCompetitionId, $info);
-                    if ($cnt % 40 == 0) {
+                    if (0 == $cnt % 40) {
                         // Speichern
                         $this->persist($data);
                         // Wettbewerb neu laden, da ggf. neue Teams drin stehen
@@ -135,21 +132,21 @@ class Tx_Dflsync_Service_Sync
                 }
                 // else: das Spiel ist nicht relevant
             } catch (Exception $e) {
-                tx_rnbase_util_Logger::fatal('Error reading Fixture!', 'dflsync', array(
-                    'msg' => $e->getMessage()
-                ));
+                tx_rnbase_util_Logger::fatal('Error reading Fixture!', 'dflsync', [
+                    'msg' => $e->getMessage(),
+                ]);
             }
             $reader->next('Fixture');
         }
         // Die restlichen Spiele speichern
         $this->persist($data);
-        $this->stats['total']['time'] = intval(microtime(true) - $start) . 's';
+        $this->stats['total']['time'] = intval(microtime(true) - $start).'s';
         $this->stats['total']['matches'] = $cnt;
 
-        tx_rnbase_util_Logger::info('Update match schedule finished!', 'dflsync', array(
+        tx_rnbase_util_Logger::info('Update match schedule finished!', 'dflsync', [
             'stats' => $this->stats,
-            'info' => $info
-        ));
+            'info' => $info,
+        ]);
 
         // tx_rnbase_util_Debug::debug(array('Spiele'=>$cnt, 'File'=>$fileSaison, 'Valid'=>$reader->isValid()), __FILE__.' : '.__LINE__); // TODO: remove me
         // tx_rnbase_util_Debug::debug($reader, __FILE__.' : '.__LINE__); // TODO: remove me
@@ -158,22 +155,21 @@ class Tx_Dflsync_Service_Sync
 
     private function persist(&$data)
     {
-        $start = microtime(TRUE);
+        $start = microtime(true);
 
         $tce = Tx_Rnbase_Database_Connection::getInstance()->getTCEmain($data);
         $tce->process_datamap();
 
-        $this->stats['chunks'][]['time'] = intval(microtime(true) - $start) . 's';
+        $this->stats['chunks'][]['time'] = intval(microtime(true) - $start).'s';
         $this->stats['chunks'][]['matches'] = count($data[self::TABLE_GAMES]);
 
-        $data[self::TABLE_TEAMS] = array();
-        $data[self::TABLE_STADIUMS] = array();
-        $data[self::TABLE_GAMES] = array();
-        $data[self::TABLE_COMPETITION] = array();
+        $data[self::TABLE_TEAMS] = [];
+        $data[self::TABLE_STADIUMS] = [];
+        $data[self::TABLE_GAMES] = [];
+        $data[self::TABLE_COMPETITION] = [];
     }
 
     /**
-     *
      * @param array $data
      * @param tx_rnbase_util_XmlElement $node
      * @param tx_cfcleague_models_Competition $competition
@@ -184,18 +180,18 @@ class Tx_Dflsync_Service_Sync
     {
         // Das Spiel suchen und ggf. anlegen
         $dflId = $node->getValueFromPath('MatchId');
-        $matchUid = 'NEW_' . $dflId;
+        $matchUid = 'NEW_'.$dflId;
         if (array_key_exists($dflId, $this->matchMap)) {
             $matchUid = $this->matchMap[$dflId];
-            $info['match']['updated'] += 1;
+            ++$info['match']['updated'];
         } else {
-            $info['match']['new'] += 1;
+            ++$info['match']['new'];
         }
         $data[self::TABLE_GAMES][$matchUid]['pid'] = $this->pageUid;
         $data[self::TABLE_GAMES][$matchUid]['extid'] = $dflId;
         $data[self::TABLE_GAMES][$matchUid]['competition'] = $competition->getUid();
         $data[self::TABLE_GAMES][$matchUid]['round'] = $node->getValueFromPath('MatchDay');
-        $data[self::TABLE_GAMES][$matchUid]['round_name'] = $node->getValueFromPath('MatchDay') . '. Spieltag';
+        $data[self::TABLE_GAMES][$matchUid]['round_name'] = $node->getValueFromPath('MatchDay').'. Spieltag';
         // Es muss ein lokaler Timestamp gesetzt werden
         $kickoff = $node->getDateTimeFromPath('PlannedKickoffTime');
         $data[self::TABLE_GAMES][$matchUid]['date'] = ($kickoff->getTimestamp() + $kickoff->getOffset());
@@ -221,49 +217,49 @@ class Tx_Dflsync_Service_Sync
      */
     private function checkMatchStats(&$data, $matchUid, $dflId, $dflCompetitionId)
     {
-        $prefix = 'DFL_03_03_events_matchstatistics_periods_' . $dflCompetitionId . '_';
-        $statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $prefix . $dflId . '.xml');
-        if (! file_exists($statsFile)) {
+        $prefix = 'DFL_03_03_events_matchstatistics_periods_'.$dflCompetitionId.'_';
+        $statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
+        if (!file_exists($statsFile)) {
             // tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without stats file!', 'dflsync', array('file'=>$statsFile));
             return;
         }
 
         // Dateien lesen
         $reader = new XMLReader();
-        if (! $reader->open($statsFile, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading match stats ' . $dflId . '.xml file!', 'dflsync');
-            throw new Exception('Error reading match statistics ' . $dflId . '.xml!');
+        if (!$reader->open($statsFile, 'UTF-8', 0)) {
+            tx_rnbase_util_Logger::fatal('Error reading match stats '.$dflId.'.xml file!', 'dflsync');
+            throw new Exception('Error reading match statistics '.$dflId.'.xml!');
         }
-        while ($reader->read() && $reader->name !== 'MatchStatistic');
+        while ($reader->read() && 'MatchStatistic' !== $reader->name);
 
         $doc = new DOMDocument();
         $found = 0;
-        while ($reader->name === 'MatchStatistic' && $found < 2) {
+        while ('MatchStatistic' === $reader->name && $found < 2) {
             // Wir müssen den Tag mit dem Scope match suchen
 
             $node = $reader->expand();
-            if ($node === FALSE || ! $node instanceof DOMNode) {
-                throw new LogicException('The current DOMNode MatchStatistic is invalid. File [' . $statsFile . '] Last error: ' . print_r(error_get_last(), true), 1353592747);
+            if (false === $node || !$node instanceof DOMNode) {
+                throw new LogicException('The current DOMNode MatchStatistic is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353592747);
             }
             /* @var $envNode tx_rnbase_util_XmlElement */
             $envNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
             $scope = $envNode->getValueFromPath('Scope');
-            if ($scope == 'match') {
+            if ('match' == $scope) {
                 $data[self::TABLE_GAMES][$matchUid]['status'] = 2;
                 if ($result = $envNode->getValueFromPath('Result')) {
                     $result = Tx_Rnbase_Utility_Strings::intExplode(':', $result);
                     $data[self::TABLE_GAMES][$matchUid]['goals_home_2'] = $result[0];
                     $data[self::TABLE_GAMES][$matchUid]['goals_guest_2'] = $result[1];
                 }
-                $found ++;
-            } elseif ($scope == 'firstHalf') {
+                ++$found;
+            } elseif ('firstHalf' == $scope) {
                 // Halbzeitergebnis
                 if ($result = $envNode->getValueFromPath('Result')) {
                     $result = Tx_Rnbase_Utility_Strings::intExplode(':', $result);
                     $data[self::TABLE_GAMES][$matchUid]['goals_home_1'] = $result[0];
                     $data[self::TABLE_GAMES][$matchUid]['goals_guest_1'] = $result[1];
                 }
-                $found ++;
+                ++$found;
             }
             $reader->next('MatchStatistic');
         }
@@ -272,7 +268,7 @@ class Tx_Dflsync_Service_Sync
 
     /**
      * Lesen der ggf.
-     * vorhandenen Datei für die MatchInfo
+     * vorhandenen Datei für die MatchInfo.
      *
      * @param array $data
      * @param int $matchUid
@@ -281,26 +277,27 @@ class Tx_Dflsync_Service_Sync
      */
     private function checkMatchInfo(&$data, $matchUid, $dflId, $dflCompetitionId)
     {
-        $prefix = 'DFL_02_01_matchinformation_' . $dflCompetitionId . '_';
-        $infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $prefix . $dflId . '.xml');
-        if (! file_exists($infoFile))
+        $prefix = 'DFL_02_01_matchinformation_'.$dflCompetitionId.'_';
+        $infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
+        if (!file_exists($infoFile)) {
             // tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without matchinfo file!', 'dflsync', array('file'=>$infoFile));
             return;
+        }
 
         // Dateien lesen
         $reader = new XMLReader();
-        if (! $reader->open($infoFile, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading match info ' . $dflId . '.xml file!', 'dflsync');
-            throw new Exception('Error reading match information ' . $dflId . '.xml!');
+        if (!$reader->open($infoFile, 'UTF-8', 0)) {
+            tx_rnbase_util_Logger::fatal('Error reading match info '.$dflId.'.xml file!', 'dflsync');
+            throw new Exception('Error reading match information '.$dflId.'.xml!');
         }
-        while ($reader->read() && $reader->name !== 'Environment');
+        while ($reader->read() && 'Environment' !== $reader->name);
 
         $doc = new DOMDocument();
-        if ($reader->name === 'Environment') {
+        if ('Environment' === $reader->name) {
             // Hier wird nur ein Tag ausgelesen
             $node = $reader->expand();
-            if ($node === FALSE || ! $node instanceof DOMNode) {
-                throw new LogicException('The current DOMNode Environment is invalid. File [' . $infoFile . '] Last error: ' . print_r(error_get_last(), true), 1353593847);
+            if (false === $node || !$node instanceof DOMNode) {
+                throw new LogicException('The current DOMNode Environment is invalid. File ['.$infoFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
             }
             /* @var $envNode tx_rnbase_util_XmlElement */
             $envNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
@@ -313,35 +310,36 @@ class Tx_Dflsync_Service_Sync
     }
 
     /**
-     * Liefert die UID des Teams, oder einen NEW_-Key
+     * Liefert die UID des Teams, oder einen NEW_-Key.
      *
      * @param string $dflId
      * @param [] $data
      * @param tx_cfcleague_models_Competition $competition
+     *
      * @return string
      */
     private function findTeam($dflId, &$data, $competition)
     {
-        $uid = 'NEW_' . $dflId;
-        if (! array_key_exists($dflId, $this->teamMap)) {
+        $uid = 'NEW_'.$dflId;
+        if (!array_key_exists($dflId, $this->teamMap)) {
             // Das Team ist noch nicht im Cache, also in der DB suchen
             /* @var $teamSrv tx_cfcleague_services_Teams */
             $teamSrv = tx_cfcleague_util_ServiceRegistry::getTeamService();
-            $fields = array();
+            $fields = [];
             $fields['TEAM.EXTID'][OP_EQ_NOCASE] = $dflId;
             $fields['TEAM.PID'][OP_EQ_INT] = $competition->getPid();
 
-            $options = array(
+            $options = [
                 'what' => 'uid',
-            );
+            ];
             $ret = $teamSrv->searchTeams($fields, $options);
-            if (! empty($ret)) {
+            if (!empty($ret)) {
                 $this->teamMap[$dflId] = $ret[0]['uid'];
                 $uid = $this->teamMap[$dflId];
             } else {
                 // In uid steht jetzt NEW_
                 // Team anlegen, falls es noch nicht in der Data-Map liegt
-                if (! array_key_exists($uid, $data[self::TABLE_TEAMS])) {
+                if (!array_key_exists($uid, $data[self::TABLE_TEAMS])) {
                     $data[self::TABLE_TEAMS][$uid] = $this->loadTeamData($dflId);
                     // Jetzt zusätzlich in die teamMap legen
 //                    $this->teamMap[$dflId] = $uid;
@@ -352,6 +350,7 @@ class Tx_Dflsync_Service_Sync
         } else {
             $uid = $this->teamMap[$dflId];
         }
+
         return $uid;
     }
 
@@ -368,25 +367,24 @@ class Tx_Dflsync_Service_Sync
      */
     private function addTeamToCompetition($teamUid, &$data, $competition)
     {
-        $add = TRUE;
+        $add = true;
         if ($competition->getProperty('teams')) {
             $teamUids = array_flip(Tx_Rnbase_Utility_Strings::trimExplode(',', $competition->getProperty('teams')));
-            $add = ! (array_key_exists($teamUid, $teamUids));
+            $add = !(array_key_exists($teamUid, $teamUids));
         }
-        if (! $add) {
+        if (!$add) {
             return;
         }
         // Das geht bestimmt auch kürzer...
         // Das Team in den Wettbewerb legen
         if (isset($data[self::TABLE_COMPETITION][$competition->getUid()]['teams'])) {
-            $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] .= ',' . $teamUid;
+            $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] .= ','.$teamUid;
         } else {
             // Das erste Team
             if ($competition->getProperty('teams')) {
                 $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] = $competition->getProperty('teams');
-                $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] .= ',' . $teamUid;
-            }
-            else {
+                $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] .= ','.$teamUid;
+            } else {
                 $data[self::TABLE_COMPETITION][$competition->getUid()]['teams'] = $teamUid;
             }
         }
@@ -397,55 +395,56 @@ class Tx_Dflsync_Service_Sync
         if (array_key_exists($dflId, $this->teamData)) {
             return $this->teamData[$dflId];
         }
-        throw new Exception('Team not found: ' . $dflId);
+        throw new Exception('Team not found: '.$dflId);
     }
 
     /**
-     * Befüllt die Instanzvariablen teamData und clubData
+     * Befüllt die Instanzvariablen teamData und clubData.
      *
      * @param string $fileClub
+     *
      * @throws Exception
      * @throws LogicException
      */
     private function initXmlTeams($fileClub)
     {
         $reader = new XMLReader();
-        if (! $reader->open($fileClub, 'UTF-8', 0)) {
+        if (!$reader->open($fileClub, 'UTF-8', 0)) {
             tx_rnbase_util_Logger::fatal('Error reading team data xml string!', 'dflsync', $fileClub);
             throw new Exception('Error reading xml string!');
         }
-        while ($reader->read() && $reader->name !== 'Club');
+        while ($reader->read() && 'Club' !== $reader->name);
 
         $doc = new DOMDocument();
-        while ($reader->name === 'Club') {
+        while ('Club' === $reader->name) {
             try {
                 $node = $reader->expand();
-                if ($node === FALSE || ! $node instanceof DOMNode) {
-                    throw new LogicException('The current DOMNode is invalid. Last error: ' . print_r(error_get_last(), true), 1353594857);
+                if (false === $node || !$node instanceof DOMNode) {
+                    throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
                 }
                 /* @var $clubNode tx_rnbase_util_XmlElement */
                 $clubNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
                 // Es interessieren hier nur die Teams ohne das Attribut ValidTo
-                if (! $clubNode->hasValueForPath('ValidTo')) {
-                    $this->teamData[$clubNode->getValueFromPath('ClubId')] = array(
+                if (!$clubNode->hasValueForPath('ValidTo')) {
+                    $this->teamData[$clubNode->getValueFromPath('ClubId')] = [
                         'pid' => $this->pageUid,
                         'extid' => $clubNode->getValueFromPath('ClubId'),
                         'name' => $clubNode->getValueFromPath('LongName'),
                         'short_name' => $clubNode->getValueFromPath('ShortName'),
-                        'tlc' => $clubNode->getValueFromPath('ThreeLetterCode')
-                    );
-                    $this->clubData[$clubNode->getValueFromPath('ClubId')] = array(
+                        'tlc' => $clubNode->getValueFromPath('ThreeLetterCode'),
+                    ];
+                    $this->clubData[$clubNode->getValueFromPath('ClubId')] = [
                         'extid' => $clubNode->getValueFromPath('ClubId'),
                         'name' => $clubNode->getValueFromPath('Name'),
                         'short_name' => $clubNode->getValueFromPath('ShortName'),
                         'email' => $clubNode->getValueFromPath('Mail'),
                         'www' => $clubNode->getValueFromPath('Website'),
-                        'street' => trim($clubNode->getValueFromPath('Street') . ' ' . $clubNode->getValueFromPath('HouseNumber')),
+                        'street' => trim($clubNode->getValueFromPath('Street').' '.$clubNode->getValueFromPath('HouseNumber')),
                         'zip' => $clubNode->getValueFromPath('PostalCode'),
                         'city' => $clubNode->getValueFromPath('City'),
                         'email' => $clubNode->getValueFromPath('Mail'),
-                        'yearestablished' => $clubNode->getValueFromPath('Founded')
-                    );
+                        'yearestablished' => $clubNode->getValueFromPath('Founded'),
+                    ];
                 }
             } catch (Exception $e) {
                 tx_rnbase_util_Logger::fatal('Error reading Fixture!', 'dflsync', $e->getMessage());
@@ -455,23 +454,23 @@ class Tx_Dflsync_Service_Sync
     }
 
     /**
-     * Lädt die vorhandenen Spiele des Wettbewerbs in die matchMap
+     * Lädt die vorhandenen Spiele des Wettbewerbs in die matchMap.
      *
      * @param tx_cfcleague_models_Competition $competition
      */
     private function initMatches(tx_cfcleague_models_Competition $competition)
     {
-        $fields = array();
-        $options = array();
+        $fields = [];
+        $options = [];
         /* @var $matchSrv tx_cfcleague_services_Match */
         $matchSrv = tx_cfcleague_util_ServiceRegistry::getMatchService();
         $fields['MATCH.COMPETITION'][OP_EQ_INT] = $competition->getUid();
         $options['what'] = 'uid,extid';
         $options['orderby'] = 'uid asc';
-        $options['callback'] = array(
+        $options['callback'] = [
             $this,
-            'cbAddMatch'
-        );
+            'cbAddMatch',
+        ];
         $matchSrv->search($fields, $options);
         // TODO: Validierung??
     }
@@ -483,15 +482,14 @@ class Tx_Dflsync_Service_Sync
 
     private function getFileName($filename)
     {
-        $filename = tx_rnbase_util_Files::getFileAbsFileName($filename, FALSE);
-        if (! is_file($filename)) {
-            throw new Exception('File not found: ' . $filename);
+        $filename = tx_rnbase_util_Files::getFileAbsFileName($filename, false);
+        if (!is_file($filename)) {
+            throw new Exception('File not found: '.$filename);
         }
-        if (! @is_readable($filename)) {
-            throw new Exception('File is not readable: ' . $filename);
+        if (!@is_readable($filename)) {
+            throw new Exception('File is not readable: '.$filename);
         }
+
         return $filename;
     }
 }
-
-

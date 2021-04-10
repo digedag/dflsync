@@ -24,13 +24,12 @@
  ***************************************************************/
 
 /**
- * Import von Spielern und Trainern
+ * Import von Spielern und Trainern.
  */
 class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
 {
-
     /**
-     * Amount of items to be indexed at one run
+     * Amount of items to be indexed at one run.
      *
      * @var int
      */
@@ -44,7 +43,7 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
 
     /**
      * Function executed from the Scheduler.
-     * Sends an email
+     * Sends an email.
      *
      * @return void
      */
@@ -56,9 +55,9 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
             $sync = tx_rnbase::makeInstance('Tx_Dflsync_Service_ProfileImport');
             $sync->doImport($this->competition, $this->pathClubInfo, $this->pidOwn, $this->pidOther);
         } catch (Exception $e) {
-            tx_rnbase_util_Logger::fatal('Task failed!', 'dflsync', array(
-                'Exception' => $e->getMessage()
-            ));
+            tx_rnbase_util_Logger::fatal('Task failed!', 'dflsync', [
+                'Exception' => $e->getMessage(),
+            ]);
             // Da die Exception gefangen wird, würden die Entwickler keine Mail bekommen
             // also machen wir das manuell
             if ($addr = tx_rnbase_configurations::getExtensionCfgValue('rn_base', 'sendEmailOnException')) {
@@ -72,7 +71,6 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
     }
 
     /**
-     *
      * @return int
      */
     public function getCompetition()
@@ -81,22 +79,24 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
     }
 
     /**
-     * Set amount of items
+     * Set amount of items.
      *
      * @param int $val
+     *
      * @return void
      */
     public function setCompetition($val)
     {
-        if (! intval($val))
+        if (!intval($val)) {
             throw new Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
+        }
         // else
         $this->competition = intval($val);
     }
 
     /**
      * Das Verzeichnis mit den Dateien für die Spielinformationen
-     * DFL-MAT-0002MV.xml
+     * DFL-MAT-0002MV.xml.
      */
     public function getPathClubInfo()
     {
@@ -129,7 +129,7 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
     }
 
     /**
-     * This method returns the destination mail address as additional information
+     * This method returns the destination mail address as additional information.
      *
      * @return string Information to display
      */
@@ -147,4 +147,3 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
         // $this->getTargetPath(), $this->getItemsInQueue());
     }
 }
-
