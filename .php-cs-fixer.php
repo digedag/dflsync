@@ -1,7 +1,9 @@
 <?php
 
 $finder = PhpCsFixer\Finder::create()
+    ->exclude('.Build')
     ->exclude('Resources')
+    ->exclude('public')
     ->exclude('Documentation')
     ->in(__DIR__)
 ;

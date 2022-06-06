@@ -24,7 +24,8 @@
 	"require" : {
 		"typo3/cms-core": "^8.7 || ^9.5 || ^10.4",
 		"digedag/cfc-league" : "^1.6.0",
-		"digedag/rn-base" : "^1.13.0"
+		"digedag/rn-base" : "^1.13.0",
+		"friendsofphp/php-cs-fixer": "2.19.0"
 	},
 	"autoload" : {
 		"classmap" : [

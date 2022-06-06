@@ -2,4 +2,5 @@
 /.Build
 /composer.lock
 /docs
-.php-cs-fixer.cache
+/public
+.php_cs.cache
