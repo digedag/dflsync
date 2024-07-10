@@ -3,4 +3,4 @@
 /composer.lock
 /docs
 /public
-.php_cs.cache
+.php-cs-fixer.cache

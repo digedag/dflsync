@@ -8,7 +8,6 @@ use Sys25\RnBase\Utility\Logger;
 use Sys25\RnBase\Utility\Misc;
 use Sys25\T3sports\DflSync\Service\ProfileImport;
 use System25\T3sports\Model\Competition;
-use tx_rnbase;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
 
 /***************************************************************
@@ -36,7 +35,7 @@ use TYPO3\CMS\Scheduler\Task\AbstractTask;
 
 /**
  * Import von Spielern und Trainern.
- * Tx_Dflsync_Scheduler_ProfileTask
+ * Tx_Dflsync_Scheduler_ProfileTask.
  */
 class ProfileTask extends AbstractTask
 {
@@ -64,9 +63,9 @@ class ProfileTask extends AbstractTask
         $success = true;
 
         try {
-            $sync = tx_rnbase::makeInstance(ProfileImport::class);
+            $sync = \tx_rnbase::makeInstance(ProfileImport::class);
             $sync->doImport($this->competition, $this->pathClubInfo, $this->pidOwn, $this->pidOther);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Logger::fatal('Task failed!', 'dflsync', [
                 'Exception' => $e->getMessage(),
             ]);
@@ -99,7 +98,7 @@ class ProfileTask extends AbstractTask
     public function setCompetition($val)
     {
         if (!intval($val)) {
-            throw new Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
+            throw new \Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
         }
         // else
         $this->competition = intval($val);
@@ -149,7 +148,7 @@ class ProfileTask extends AbstractTask
         $compName = '';
 
         if ($compUid = $this->getCompetition()) {
-            $competition = tx_rnbase::makeInstance(Competition::class, $compUid);
+            $competition = \tx_rnbase::makeInstance(Competition::class, $compUid);
             $compName = $competition->isValid() ? $competition->getName() : '[invalid!]';
         }
 

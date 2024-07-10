@@ -2,16 +2,11 @@
 
 namespace Sys25\T3sports\DflSync\Service;
 
-use DOMDocument;
-use DOMNode;
-use Exception;
-use LogicException;
 use Sys25\RnBase\Database\Connection;
 use Sys25\RnBase\Utility\Logger;
 use Sys25\RnBase\Utility\XmlElement;
 use System25\T3sports\Utility\ServiceRegistry;
 use tx_rnbase;
-use XMLReader;
 
 /***************************************************************
  *  Copyright notice
@@ -38,11 +33,11 @@ use XMLReader;
 
 class ProfileImport
 {
-    const TABLE_TEAMS = 'tx_cfcleague_teams';
+    public const TABLE_TEAMS = 'tx_cfcleague_teams';
 
-    const TABLE_COMPETITION = 'tx_cfcleague_competition';
+    public const TABLE_COMPETITION = 'tx_cfcleague_competition';
 
-    const TABLE_PROFILES = 'tx_cfcleague_profiles';
+    public const TABLE_PROFILES = 'tx_cfcleague_profiles';
 
     /**
      * Key ist DFL-ID, value ist T3-UID.
@@ -90,7 +85,7 @@ class ProfileImport
         $start = microtime(true);
 
         /* @var $competition tx_cfcleague_models_Competition */
-        $competition = tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $competitionUid);
+        $competition = \tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $competitionUid);
         $teams = $competition->getTeams();
         foreach ($teams as $team) {
             $this->refreshTeam($team);
@@ -147,8 +142,8 @@ class ProfileImport
      */
     private function checkCoaches(&$data, $team, $dflId, $pid)
     {
-//         $prefix = 'DFL_01_05_masterdata_';
-//         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
+        //         $prefix = 'DFL_01_05_masterdata_';
+        //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'teamofficial');
         if (!file_exists($feedFile)) {
             Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No officials feed file found.', 'dflsync', [
@@ -214,8 +209,8 @@ class ProfileImport
      */
     private function checkPlayers(&$data, $team, $dflId, $pid)
     {
-//         $prefix = 'DFL_01_05_masterdata_';
-//         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_player.xml');
+        //         $prefix = 'DFL_01_05_masterdata_';
+        //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_player.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'player');
         if (!file_exists($feedFile)) {
             Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No player feed file found.', 'dflsync', [
@@ -292,19 +287,20 @@ class ProfileImport
      */
     protected function readProfiles($file)
     {
-        $reader = new XMLReader();
+        $reader = new \XMLReader();
         if (!$reader->open($file, 'UTF-8', 0)) {
             Logger::fatal('Error reading profile feed '.$file.'!', 'dflsync');
-            throw new Exception('Error reading profile feed '.$file.' !');
+            throw new \Exception('Error reading profile feed '.$file.' !');
         }
-        while ($reader->read() && 'Object' !== $reader->name);
+        while ($reader->read() && 'Object' !== $reader->name) {
+        }
 
-        $doc = new DOMDocument();
+        $doc = new \DOMDocument();
         $profiles = [];
         while ('Object' === $reader->name) {
             $node = $reader->expand();
-            if (false === $node || !$node instanceof DOMNode) {
-                throw new LogicException('The current DOMNode Object is invalid. File ['.$file.'] Last error: '.print_r(error_get_last(), true), 1353542747);
+            if (false === $node || !$node instanceof \DOMNode) {
+                throw new \LogicException('The current DOMNode Object is invalid. File ['.$file.'] Last error: '.print_r(error_get_last(), true), 1353542747);
             }
             /** @var XmlElement $envNode */
             $envNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);

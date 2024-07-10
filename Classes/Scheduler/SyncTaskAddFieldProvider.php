@@ -30,8 +30,7 @@ use TYPO3\CMS\Scheduler\Task\Enumeration\Action;
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 
-
-//class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_AdditionalFieldProvider
+// class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_AdditionalFieldProvider
 class SyncTaskAddFieldProvider extends AbstractAdditionalFieldProvider
 {
     public const FIELD_FILE_CLUB = 'fileClub';
