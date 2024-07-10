@@ -1,8 +1,16 @@
 <?php
+
+namespace System25\T3sports\DflSync\Scheduler;
+
+use TYPO3\CMS\Scheduler\AbstractAdditionalFieldProvider;
+use TYPO3\CMS\Scheduler\Controller\SchedulerModuleController;
+use TYPO3\CMS\Scheduler\Task\AbstractTask;
+use TYPO3\CMS\Scheduler\Task\Enumeration\Action;
+
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2014-2017 René Nitzsche <rene@system25.de>
+ *  (c) 2014-2024 René Nitzsche <rene@system25.de>
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -21,14 +29,17 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-define('FIELD_FILE_CLUB', 'fileClub');
-define('FIELD_FILE_SAISON', 'fileSaison');
-define('FIELD_COMPETITION', 'competition');
-define('FIELD_PATH_MATCH_STATS', 'pathMatchStats');
-define('FIELD_PATH_MATCH_INFO', 'pathMatchInfo');
 
-class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_AdditionalFieldProvider
+
+//class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_AdditionalFieldProvider
+class SyncTaskAddFieldProvider extends AbstractAdditionalFieldProvider
 {
+    public const FIELD_FILE_CLUB = 'fileClub';
+    public const FIELD_FILE_SAISON = 'fileSaison';
+    public const FIELD_COMPETITION = 'competition';
+    public const FIELD_PATH_MATCH_STATS = 'pathMatchStats';
+    public const FIELD_PATH_MATCH_INFO = 'pathMatchInfo';
+
     /**
      * This method is used to define new fields for adding or editing a task
      * In this case, it adds an email field.
@@ -48,40 +59,40 @@ class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_Addi
      *         ['cshKey'] => The CSH key for the field
      *         ['cshLabel'] => The code of the CSH label
      */
-    public function getAdditionalFields(array &$taskInfo, $task, tx_scheduler_Module $parentObject)
+    public function getAdditionalFields(array &$taskInfo, $task, SchedulerModuleController $parentObject)
     {
         // Initialize extra field value
         if (!array_key_exists(FIELD_PATH, $taskInfo) || empty($taskInfo[FIELD_PATH])) {
             if ('add' == $parentObject->CMD) {
                 // New task
-                $taskInfo[FIELD_COMPETITION] = '';
-                $taskInfo[FIELD_FILE_CLUB] = '';
-                $taskInfo[FIELD_FILE_SAISON] = '';
-                $taskInfo[FIELD_PATH_MATCH_INFO] = '';
-                $taskInfo[FIELD_PATH_MATCH_STATS] = '';
+                $taskInfo[self::FIELD_COMPETITION] = '';
+                $taskInfo[self::FIELD_FILE_CLUB] = '';
+                $taskInfo[self::FIELD_FILE_SAISON] = '';
+                $taskInfo[self::FIELD_PATH_MATCH_INFO] = '';
+                $taskInfo[self::FIELD_PATH_MATCH_STATS] = '';
             } elseif ('edit' == $parentObject->CMD) {
                 // Editing a task, set to internal value if data was not submitted already
-                $taskInfo[FIELD_COMPETITION] = $task->getCompetition();
-                $taskInfo[FIELD_FILE_CLUB] = $task->getFileClub();
-                $taskInfo[FIELD_FILE_SAISON] = $task->getFileSaison();
-                $taskInfo[FIELD_PATH_MATCH_INFO] = $task->getPathMatchInfo();
-                $taskInfo[FIELD_PATH_MATCH_STATS] = $task->getPathMatchStats();
+                $taskInfo[self::FIELD_COMPETITION] = $task->getCompetition();
+                $taskInfo[self::FIELD_FILE_CLUB] = $task->getFileClub();
+                $taskInfo[self::FIELD_FILE_SAISON] = $task->getFileSaison();
+                $taskInfo[self::FIELD_PATH_MATCH_INFO] = $task->getPathMatchInfo();
+                $taskInfo[self::FIELD_PATH_MATCH_STATS] = $task->getPathMatchStats();
             } else {
                 // Otherwise set an empty value, as it will not be used anyway
-                $taskInfo[FIELD_COMPETITION] = '';
-                $taskInfo[FIELD_FILE_CLUB] = '';
-                $taskInfo[FIELD_FILE_SAISON] = '';
-                $taskInfo[FIELD_PATH_MATCH_INFO] = '';
-                $taskInfo[FIELD_PATH_MATCH_STATS] = '';
+                $taskInfo[self::FIELD_COMPETITION] = '';
+                $taskInfo[self::FIELD_FILE_CLUB] = '';
+                $taskInfo[self::FIELD_FILE_SAISON] = '';
+                $taskInfo[self::FIELD_PATH_MATCH_INFO] = '';
+                $taskInfo[self::FIELD_PATH_MATCH_STATS] = '';
             }
         }
 
         $additionalFields = [];
-        $this->makeField($additionalFields, FIELD_COMPETITION, $taskInfo, 10);
-        $this->makeField($additionalFields, FIELD_FILE_CLUB, $taskInfo);
-        $this->makeField($additionalFields, FIELD_FILE_SAISON, $taskInfo);
-        $this->makeField($additionalFields, FIELD_PATH_MATCH_INFO, $taskInfo);
-        $this->makeField($additionalFields, FIELD_PATH_MATCH_STATS, $taskInfo);
+        $this->makeField($additionalFields, self::FIELD_COMPETITION, $taskInfo, 10);
+        $this->makeField($additionalFields, self::FIELD_FILE_CLUB, $taskInfo);
+        $this->makeField($additionalFields, self::FIELD_FILE_SAISON, $taskInfo);
+        $this->makeField($additionalFields, self::FIELD_PATH_MATCH_INFO, $taskInfo);
+        $this->makeField($additionalFields, self::FIELD_PATH_MATCH_STATS, $taskInfo);
 
         return $additionalFields;
     }
@@ -104,24 +115,13 @@ class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_Addi
      * This method checks any additional data that is relevant to the specific task
      * If the task class is not relevant, the method is expected to return true.
      *
-     * @param array $submittedData:
-     *            reference to the array containing the data submitted by the user
-     * @param tx_scheduler_Module $parentObject:
-     *            reference to the calling object (Scheduler's BE module)
+     * @param array $submittedData reference to the array containing the data submitted by the user
+     * @param SchedulerModuleController $parentObject reference to the calling object (Scheduler's BE module)
      *
      * @return bool True if validation was ok (or selected class is not relevant), false otherwise
      */
-    public function validateAdditionalFields(array &$submittedData, tx_scheduler_Module $parentObject)
+    public function validateAdditionalFields(array &$submittedData, SchedulerModuleController $parentObject)
     {
-        return true;
-
-        $submittedData[FIELD_PATH] = trim($submittedData[FIELD_PATH]);
-        if (empty($submittedData[FIELD_PATH])) {
-            $parentObject->addMessage($GLOBALS['LANG']->sL('LLL:EXT:scheduler/mod1/locallang.xml:msg.noEmail'), t3lib_FlashMessage::ERROR);
-
-            return false;
-        }
-
         return true;
     }
 
@@ -129,19 +129,17 @@ class Tx_Dflsync_Scheduler_SyncTaskAddFieldProvider implements tx_scheduler_Addi
      * This method is used to save any additional input into the current task object
      * if the task class matches.
      *
-     * @param array $submittedData:
-     *            array containing the data submitted by the user
-     * @param Tx_Dflsync_Scheduler_SyncTask $task:
-     *            reference to the current task object
+     * @param array $submittedData array containing the data submitted by the user
+     * @param SyncTask $task reference to the current task object
      *
      * @return void
      */
-    public function saveAdditionalFields(array $submittedData, tx_scheduler_Task $task)
+    public function saveAdditionalFields(array $submittedData, AbstractTask $task)
     {
-        $task->setCompetition($submittedData[FIELD_COMPETITION]);
-        $task->setFileClub($submittedData[FIELD_FILE_CLUB]);
-        $task->setFileSaison($submittedData[FIELD_FILE_SAISON]);
-        $task->setPathMatchInfo($submittedData[FIELD_PATH_MATCH_INFO]);
-        $task->setPathMatchStats($submittedData[FIELD_PATH_MATCH_STATS]);
+        $task->setCompetition($submittedData[self::FIELD_COMPETITION]);
+        $task->setFileClub($submittedData[self::FIELD_FILE_CLUB]);
+        $task->setFileSaison($submittedData[self::FIELD_FILE_SAISON]);
+        $task->setPathMatchInfo($submittedData[self::FIELD_PATH_MATCH_INFO]);
+        $task->setPathMatchStats($submittedData[self::FIELD_PATH_MATCH_STATS]);
     }
 }

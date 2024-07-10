@@ -1,8 +1,24 @@
 <?php
+namespace Sys25\T3sports\DflSync\Service;
+
+use DOMDocument;
+use DOMNode;
+use Exception;
+use LogicException;
+use Sys25\RnBase\Database\Connection;
+use Sys25\RnBase\Utility\Files;
+use Sys25\RnBase\Utility\Logger;
+use Sys25\RnBase\Utility\Strings;
+use Sys25\RnBase\Utility\XmlElement;
+use System25\T3sports\Model\Competition;
+use System25\T3sports\Utility\ServiceRegistry;
+use tx_rnbase;
+use XMLReader;
+
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2014-2017 Rene Nitzsche (rene@system25.de)
+ *  (c) 2014-2024 Rene Nitzsche (rene@system25.de)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -21,12 +37,9 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-tx_rnbase::load('tx_rnbase_util_Logger');
-tx_rnbase::load('tx_rnbase_util_Files');
-tx_rnbase::load('tx_rnbase_util_XmlElement');
-tx_rnbase::load('Tx_Rnbase_Utility_Strings');
 
-class Tx_Dflsync_Service_Sync
+//class Tx_Dflsync_Service_Sync
+class Sync
 {
     const TABLE_GAMES = 'tx_cfcleague_games';
 
@@ -71,14 +84,14 @@ class Tx_Dflsync_Service_Sync
 
         $fileSaison = $this->getFileName($fileSaison);
         $fileClub = $this->getFileName($fileClub);
-        $competition = tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $competitionUid);
+        $competition = tx_rnbase::makeInstance(Competition::class, $competitionUid);
         $this->pageUid = $competition->getProperty('pid');
         $this->initMatches($competition);
 
         // Dateien lesen
         $reader = new XMLReader();
         if (!$reader->open($fileSaison, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading match schedule xml string!', 'dflsync', $fileSaison);
+            Logger::fatal('Error reading match schedule xml string!', 'dflsync', $fileSaison);
             throw new Exception('Error reading xml string!');
         }
         while ($reader->read() && 'Fixture' !== $reader->name);
@@ -115,8 +128,8 @@ class Tx_Dflsync_Service_Sync
                 if (false === $node || !$node instanceof DOMNode) {
                     throw new LogicException('The current DOMNode Fixture is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
                 }
-                /* @var $matchNode tx_rnbase_util_XmlElement */
-                $matchNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
+                /** @var XmlElement $matchNode  */
+                $matchNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
                 // Es interessieren hier nur die Spiele ohne das Attribut ValidTo
                 $dflCompetitionId = $matchNode->getValueFromPath('CompetitionId');
                 // TODO: das muss als parameter kommen... jetzt fix 2. BL
@@ -132,7 +145,7 @@ class Tx_Dflsync_Service_Sync
                 }
                 // else: das Spiel ist nicht relevant
             } catch (Exception $e) {
-                tx_rnbase_util_Logger::fatal('Error reading Fixture!', 'dflsync', [
+                Logger::fatal('Error reading Fixture!', 'dflsync', [
                     'msg' => $e->getMessage(),
                 ]);
             }
@@ -143,7 +156,7 @@ class Tx_Dflsync_Service_Sync
         $this->stats['total']['time'] = intval(microtime(true) - $start).'s';
         $this->stats['total']['matches'] = $cnt;
 
-        tx_rnbase_util_Logger::info('Update match schedule finished!', 'dflsync', [
+        Logger::info('Update match schedule finished!', 'dflsync', [
             'stats' => $this->stats,
             'info' => $info,
         ]);
@@ -157,7 +170,7 @@ class Tx_Dflsync_Service_Sync
     {
         $start = microtime(true);
 
-        $tce = Tx_Rnbase_Database_Connection::getInstance()->getTCEmain($data);
+        $tce = Connection::getInstance()->getTCEmain($data);
         $tce->process_datamap();
 
         $this->stats['chunks'][]['time'] = intval(microtime(true) - $start).'s';
@@ -171,12 +184,12 @@ class Tx_Dflsync_Service_Sync
 
     /**
      * @param array $data
-     * @param tx_rnbase_util_XmlElement $node
-     * @param tx_cfcleague_models_Competition $competition
+     * @param XmlElement $node
+     * @param Competition $competition
      * @param string $dflCompetitionId
      * @param array $info
      */
-    private function handleMatch(&$data, tx_rnbase_util_XmlElement $node, $competition, $dflCompetitionId, &$info)
+    private function handleMatch(&$data, XmlElement $node, $competition, $dflCompetitionId, &$info)
     {
         // Das Spiel suchen und ggf. anlegen
         $dflId = $node->getValueFromPath('MatchId');
@@ -218,7 +231,7 @@ class Tx_Dflsync_Service_Sync
     private function checkMatchStats(&$data, $matchUid, $dflId, $dflCompetitionId)
     {
         $prefix = 'DFL_03_03_events_matchstatistics_periods_'.$dflCompetitionId.'_';
-        $statsFile = tx_rnbase_util_Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
+        $statsFile = Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
         if (!file_exists($statsFile)) {
             // tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without stats file!', 'dflsync', array('file'=>$statsFile));
             return;
@@ -227,7 +240,7 @@ class Tx_Dflsync_Service_Sync
         // Dateien lesen
         $reader = new XMLReader();
         if (!$reader->open($statsFile, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading match stats '.$dflId.'.xml file!', 'dflsync');
+            Logger::fatal('Error reading match stats '.$dflId.'.xml file!', 'dflsync');
             throw new Exception('Error reading match statistics '.$dflId.'.xml!');
         }
         while ($reader->read() && 'MatchStatistic' !== $reader->name);
@@ -241,13 +254,13 @@ class Tx_Dflsync_Service_Sync
             if (false === $node || !$node instanceof DOMNode) {
                 throw new LogicException('The current DOMNode MatchStatistic is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353592747);
             }
-            /* @var $envNode tx_rnbase_util_XmlElement */
-            $envNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
+            /** @var XmlElement $envNode */
+            $envNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
             $scope = $envNode->getValueFromPath('Scope');
             if ('match' == $scope) {
                 $data[self::TABLE_GAMES][$matchUid]['status'] = 2;
                 if ($result = $envNode->getValueFromPath('Result')) {
-                    $result = Tx_Rnbase_Utility_Strings::intExplode(':', $result);
+                    $result = Strings::intExplode(':', $result);
                     $data[self::TABLE_GAMES][$matchUid]['goals_home_2'] = $result[0];
                     $data[self::TABLE_GAMES][$matchUid]['goals_guest_2'] = $result[1];
                 }
@@ -255,7 +268,7 @@ class Tx_Dflsync_Service_Sync
             } elseif ('firstHalf' == $scope) {
                 // Halbzeitergebnis
                 if ($result = $envNode->getValueFromPath('Result')) {
-                    $result = Tx_Rnbase_Utility_Strings::intExplode(':', $result);
+                    $result = Strings::intExplode(':', $result);
                     $data[self::TABLE_GAMES][$matchUid]['goals_home_1'] = $result[0];
                     $data[self::TABLE_GAMES][$matchUid]['goals_guest_1'] = $result[1];
                 }
@@ -278,16 +291,16 @@ class Tx_Dflsync_Service_Sync
     private function checkMatchInfo(&$data, $matchUid, $dflId, $dflCompetitionId)
     {
         $prefix = 'DFL_02_01_matchinformation_'.$dflCompetitionId.'_';
-        $infoFile = tx_rnbase_util_Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
+        $infoFile = Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
         if (!file_exists($infoFile)) {
-            // tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without matchinfo file!', 'dflsync', array('file'=>$infoFile));
+            // Logger::notice('Ignore match ('.$dflId.') without matchinfo file!', 'dflsync', array('file'=>$infoFile));
             return;
         }
 
         // Dateien lesen
         $reader = new XMLReader();
         if (!$reader->open($infoFile, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading match info '.$dflId.'.xml file!', 'dflsync');
+            Logger::fatal('Error reading match info '.$dflId.'.xml file!', 'dflsync');
             throw new Exception('Error reading match information '.$dflId.'.xml!');
         }
         while ($reader->read() && 'Environment' !== $reader->name);
@@ -299,8 +312,8 @@ class Tx_Dflsync_Service_Sync
             if (false === $node || !$node instanceof DOMNode) {
                 throw new LogicException('The current DOMNode Environment is invalid. File ['.$infoFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
             }
-            /* @var $envNode tx_rnbase_util_XmlElement */
-            $envNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
+            /** @var XmlElement $envNode */
+            $envNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
             $visitors = $envNode->getIntFromPath('NumberOfSpectators');
             if ($visitors > 0) {
                 $data[self::TABLE_GAMES][$matchUid]['visitors'] = $visitors;
@@ -323,8 +336,8 @@ class Tx_Dflsync_Service_Sync
         $uid = 'NEW_'.$dflId;
         if (!array_key_exists($dflId, $this->teamMap)) {
             // Das Team ist noch nicht im Cache, also in der DB suchen
-            /* @var $teamSrv tx_cfcleague_services_Teams */
-            $teamSrv = tx_cfcleague_util_ServiceRegistry::getTeamService();
+            // @var TeamService $teamSrv */
+            $teamSrv = ServiceRegistry::getTeamService();
             $fields = [];
             $fields['TEAM.EXTID'][OP_EQ_NOCASE] = $dflId;
             $fields['TEAM.PID'][OP_EQ_INT] = $competition->getPid();
@@ -369,7 +382,7 @@ class Tx_Dflsync_Service_Sync
     {
         $add = true;
         if ($competition->getProperty('teams')) {
-            $teamUids = array_flip(Tx_Rnbase_Utility_Strings::trimExplode(',', $competition->getProperty('teams')));
+            $teamUids = array_flip(Strings::trimExplode(',', $competition->getProperty('teams')));
             $add = !(array_key_exists($teamUid, $teamUids));
         }
         if (!$add) {
@@ -410,7 +423,7 @@ class Tx_Dflsync_Service_Sync
     {
         $reader = new XMLReader();
         if (!$reader->open($fileClub, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading team data xml string!', 'dflsync', $fileClub);
+            Logger::fatal('Error reading team data xml string!', 'dflsync', $fileClub);
             throw new Exception('Error reading xml string!');
         }
         while ($reader->read() && 'Club' !== $reader->name);
@@ -422,8 +435,8 @@ class Tx_Dflsync_Service_Sync
                 if (false === $node || !$node instanceof DOMNode) {
                     throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
                 }
-                /* @var $clubNode tx_rnbase_util_XmlElement */
-                $clubNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
+                /** @var XmlElement $clubNode */
+                $clubNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
                 // Es interessieren hier nur die Teams ohne das Attribut ValidTo
                 if (!$clubNode->hasValueForPath('ValidTo')) {
                     $this->teamData[$clubNode->getValueFromPath('ClubId')] = [
@@ -447,7 +460,7 @@ class Tx_Dflsync_Service_Sync
                     ];
                 }
             } catch (Exception $e) {
-                tx_rnbase_util_Logger::fatal('Error reading Fixture!', 'dflsync', $e->getMessage());
+                Logger::fatal('Error reading Fixture!', 'dflsync', $e->getMessage());
             }
             $reader->next('Club');
         }
@@ -456,14 +469,13 @@ class Tx_Dflsync_Service_Sync
     /**
      * Lädt die vorhandenen Spiele des Wettbewerbs in die matchMap.
      *
-     * @param tx_cfcleague_models_Competition $competition
+     * @param Competition $competition
      */
-    private function initMatches(tx_cfcleague_models_Competition $competition)
+    private function initMatches(Competition $competition)
     {
         $fields = [];
         $options = [];
-        /* @var $matchSrv tx_cfcleague_services_Match */
-        $matchSrv = tx_cfcleague_util_ServiceRegistry::getMatchService();
+        $matchSrv = ServiceRegistry::getMatchService();
         $fields['MATCH.COMPETITION'][OP_EQ_INT] = $competition->getUid();
         $options['what'] = 'uid,extid';
         $options['orderby'] = 'uid asc';
@@ -482,7 +494,7 @@ class Tx_Dflsync_Service_Sync
 
     private function getFileName($filename)
     {
-        $filename = tx_rnbase_util_Files::getFileAbsFileName($filename, false);
+        $filename = Files::getFileAbsFileName($filename, false);
         if (!is_file($filename)) {
             throw new Exception('File not found: '.$filename);
         }

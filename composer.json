@@ -22,15 +22,15 @@
 		"issues" : "https://github.com/digedag/dflsync/issues"
 	},
 	"require" : {
-		"typo3/cms-core": "^8.7 || ^9.5 || ^10.4",
-		"digedag/cfc-league" : "^1.6.0",
-		"digedag/rn-base" : "^1.13.0",
-		"friendsofphp/php-cs-fixer": "2.19.0"
+		"typo3/cms-core": "^8.7 || ^9.5 || ^10.4 || ^11.5.0 || ^12.4",
+		"digedag/cfc-league" : "^1.11.0",
+		"digedag/rn-base" : "^1.17"
+	},
+	"require-dev": {
+		"friendsofphp/php-cs-fixer": "^3.0"
 	},
 	"autoload" : {
-		"classmap" : [
-			"Classes/"
-		]
+		"psr-4": {"System25\\T3sports\\DflSync\\" : "Classes"}
 	},
 	"config": {
 		"vendor-dir": ".Build/vendor",
@@ -45,9 +45,11 @@
 			"[ -L .Build/Web/typo3conf/ext/dflsync ] || ln -snvf ../../../../. .Build/Web/typo3conf/ext/dflsync"
 		]
 	},
-    "extra": {
-        "typo3/cms": {
-            "extension-key": "dflsync"
-        }
-    }
+	"extra": {
+		"typo3/cms": {
+			"cms-package-dir": "{$vendor-dir}/typo3/cms",
+			"extension-key": "dflsync",
+			"web-dir": ".Build/Web"
+		}
+	}
 }

@@ -1,9 +1,20 @@
 <?php
 
+namespace System25\T3sports\DflSync\Scheduler;
+
+use Exception;
+use Sys25\RnBase\Configuration\Processor;
+use Sys25\RnBase\Utility\Logger;
+use Sys25\RnBase\Utility\Misc;
+use Sys25\T3sports\DflSync\Service\ProfileImport;
+use System25\T3sports\Model\Competition;
+use tx_rnbase;
+use TYPO3\CMS\Scheduler\Task\AbstractTask;
+
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2014-2017 René Nitzsche <rene@system25.de>
+ *  (c) 2014-2024 René Nitzsche <rene@system25.de>
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,8 +36,9 @@
 
 /**
  * Import von Spielern und Trainern.
+ * Tx_Dflsync_Scheduler_ProfileTask
  */
-class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
+class ProfileTask extends AbstractTask
 {
     /**
      * Amount of items to be indexed at one run.
@@ -52,17 +64,16 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
         $success = true;
 
         try {
-            $sync = tx_rnbase::makeInstance('Tx_Dflsync_Service_ProfileImport');
+            $sync = tx_rnbase::makeInstance(ProfileImport::class);
             $sync->doImport($this->competition, $this->pathClubInfo, $this->pidOwn, $this->pidOther);
         } catch (Exception $e) {
-            tx_rnbase_util_Logger::fatal('Task failed!', 'dflsync', [
+            Logger::fatal('Task failed!', 'dflsync', [
                 'Exception' => $e->getMessage(),
             ]);
             // Da die Exception gefangen wird, würden die Entwickler keine Mail bekommen
             // also machen wir das manuell
-            if ($addr = tx_rnbase_configurations::getExtensionCfgValue('rn_base', 'sendEmailOnException')) {
-                tx_rnbase::load('tx_rnbase_util_Misc');
-                tx_rnbase_util_Misc::sendErrorMail($addr, 'Tx_Dflsync_Scheduler_SyncTask', $e);
+            if ($addr = Processor::getExtensionCfgValue('rn_base', 'sendEmailOnException')) {
+                Misc::sendErrorMail($addr, 'Tx_Dflsync_Scheduler_SyncTask', $e);
             }
             $success = false;
         }
@@ -138,7 +149,7 @@ class Tx_Dflsync_Scheduler_ProfileTask extends tx_scheduler_Task
         $compName = '';
 
         if ($compUid = $this->getCompetition()) {
-            $competition = tx_rnbase::makeInstance('tx_cfcleague_models_Competition', $compUid);
+            $competition = tx_rnbase::makeInstance(Competition::class, $compUid);
             $compName = $competition->isValid() ? $competition->getName() : '[invalid!]';
         }
 

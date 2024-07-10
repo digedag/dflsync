@@ -1,8 +1,15 @@
 <?php
+
+namespace System25\T3sports\DflSync\Scheduler;
+
+use TYPO3\CMS\Scheduler\AbstractAdditionalFieldProvider;
+use TYPO3\CMS\Scheduler\Controller\SchedulerModuleController;
+use TYPO3\CMS\Scheduler\Task\AbstractTask;
+
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2014-2017 René Nitzsche <rene@system25.de>
+ *  (c) 2014-2024 René Nitzsche <rene@system25.de>
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -21,23 +28,21 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-define('FIELD_COMPETITION', 'competition');
-define('FIELD_PATH_CLUB_INFO', 'pathClubInfo');
-define('FIELD_PID_OWN', 'pidOwn');
-define('FIELD_PID_OTHER', 'pidOther');
 
-class Tx_Dflsync_Scheduler_ProfileTaskAddFieldProvider implements tx_scheduler_AdditionalFieldProvider
+class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
 {
+    public const FIELD_COMPETITION = 'competition';
+    public const FIELD_PATH_CLUB_INFO = 'pathClubInfo';
+    public const FIELD_PID_OWN = 'pidOwn';
+    public const FIELD_PID_OTHER = 'pidOther';
+
     /**
      * This method is used to define new fields for adding or editing a task
      * In this case, it adds an email field.
      *
-     * @param array $taskInfo:
-     *            reference to the array containing the info used in the add/edit form
-     * @param Tx_Dflsync_Scheduler_SyncTask $task:
-     *            when editing, reference to the current task object. Null when adding.
-     * @param tx_scheduler_Module $parentObject:
-     *            reference to the calling object (Scheduler's BE module)
+     * @param array $taskInfo reference to the array containing the info used in the add/edit form
+     * @param ProfileTask $task when editing, reference to the current task object. Null when adding.
+     * @param tx_scheduler_Module $parentObject reference to the calling object (Scheduler's BE module)
      *
      * @return array Array containg all the information pertaining to the additional fields
      *         The array is multidimensional, keyed to the task class name and each field's id
@@ -47,28 +52,28 @@ class Tx_Dflsync_Scheduler_ProfileTaskAddFieldProvider implements tx_scheduler_A
      *         ['cshKey'] => The CSH key for the field
      *         ['cshLabel'] => The code of the CSH label
      */
-    public function getAdditionalFields(array &$taskInfo, $task, tx_scheduler_Module $parentObject)
+    public function getAdditionalFields(array &$taskInfo, $task, SchedulerModuleController $parentObject)
     {
         // Initialize extra field value
         if (!array_key_exists(FIELD_PATH, $taskInfo) || empty($taskInfo[FIELD_PATH])) {
-            $taskInfo[FIELD_COMPETITION] = '';
-            $taskInfo[FIELD_PATH_CLUB_INFO] = '';
-            $taskInfo[FIELD_PID_OWN] = '';
-            $taskInfo[FIELD_PID_OTHER] = '';
+            $taskInfo[self::FIELD_COMPETITION] = '';
+            $taskInfo[self::FIELD_PATH_CLUB_INFO] = '';
+            $taskInfo[self::FIELD_PID_OWN] = '';
+            $taskInfo[self::FIELD_PID_OTHER] = '';
             if ('edit' == $parentObject->CMD) {
                 // Editing a task, set to internal value if data was not submitted already
-                $taskInfo[FIELD_COMPETITION] = $task->getCompetition();
-                $taskInfo[FIELD_PATH_CLUB_INFO] = $task->getPathClubInfo();
-                $taskInfo[FIELD_PID_OWN] = $task->getPidOwn();
-                $taskInfo[FIELD_PID_OTHER] = $task->getPidOther();
+                $taskInfo[self::FIELD_COMPETITION] = $task->getCompetition();
+                $taskInfo[self::FIELD_PATH_CLUB_INFO] = $task->getPathClubInfo();
+                $taskInfo[self::FIELD_PID_OWN] = $task->getPidOwn();
+                $taskInfo[self::FIELD_PID_OTHER] = $task->getPidOther();
             }
         }
 
         $additionalFields = [];
-        $this->makeField($additionalFields, FIELD_COMPETITION, $taskInfo, 10);
-        $this->makeField($additionalFields, FIELD_PATH_CLUB_INFO, $taskInfo, 40);
-        $this->makeField($additionalFields, FIELD_PID_OWN, $taskInfo, 10);
-        $this->makeField($additionalFields, FIELD_PID_OTHER, $taskInfo, 10);
+        $this->makeField($additionalFields, self::FIELD_COMPETITION, $taskInfo, 10);
+        $this->makeField($additionalFields, self::FIELD_PATH_CLUB_INFO, $taskInfo, 40);
+        $this->makeField($additionalFields, self::FIELD_PID_OWN, $taskInfo, 10);
+        $this->makeField($additionalFields, self::FIELD_PID_OTHER, $taskInfo, 10);
 
         return $additionalFields;
     }
@@ -98,7 +103,7 @@ class Tx_Dflsync_Scheduler_ProfileTaskAddFieldProvider implements tx_scheduler_A
      *
      * @return bool True if validation was ok (or selected class is not relevant), false otherwise
      */
-    public function validateAdditionalFields(array &$submittedData, tx_scheduler_Module $parentObject)
+    public function validateAdditionalFields(array &$submittedData, SchedulerModuleController $parentObject)
     {
         return true;
     }
@@ -107,18 +112,16 @@ class Tx_Dflsync_Scheduler_ProfileTaskAddFieldProvider implements tx_scheduler_A
      * This method is used to save any additional input into the current task object
      * if the task class matches.
      *
-     * @param array $submittedData:
-     *            array containing the data submitted by the user
-     * @param Tx_Dflsync_Scheduler_SyncTask $task:
-     *            reference to the current task object
+     * @param array $submittedData array containing the data submitted by the user
+     * @param ProfileTask $task reference to the current task object
      *
      * @return void
      */
-    public function saveAdditionalFields(array $submittedData, tx_scheduler_Task $task)
+    public function saveAdditionalFields(array $submittedData, AbstractTask $task)
     {
-        $task->setCompetition($submittedData[FIELD_COMPETITION]);
-        $task->setPathClubInfo($submittedData[FIELD_PATH_CLUB_INFO]);
-        $task->setPidOwn($submittedData[FIELD_PID_OWN]);
-        $task->setPidOther($submittedData[FIELD_PID_OTHER]);
+        $task->setCompetition($submittedData[self::FIELD_COMPETITION]);
+        $task->setPathClubInfo($submittedData[self::FIELD_PATH_CLUB_INFO]);
+        $task->setPidOwn($submittedData[self::FIELD_PID_OWN]);
+        $task->setPidOther($submittedData[self::FIELD_PID_OTHER]);
     }
 }

@@ -1,8 +1,22 @@
 <?php
+
+namespace Sys25\T3sports\DflSync\Service;
+
+use DOMDocument;
+use DOMNode;
+use Exception;
+use LogicException;
+use Sys25\RnBase\Database\Connection;
+use Sys25\RnBase\Utility\Logger;
+use Sys25\RnBase\Utility\XmlElement;
+use System25\T3sports\Utility\ServiceRegistry;
+use tx_rnbase;
+use XMLReader;
+
 /***************************************************************
  *  Copyright notice
  *
- *  (c) 2014-2017 Rene Nitzsche (rene@system25.de)
+ *  (c) 2014-2024 Rene Nitzsche (rene@system25.de)
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -21,11 +35,8 @@
  *
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
-tx_rnbase::load('tx_rnbase_util_Logger');
-tx_rnbase::load('tx_rnbase_util_Files');
-tx_rnbase::load('tx_rnbase_util_XmlElement');
 
-class Tx_Dflsync_Service_ProfileImport
+class ProfileImport
 {
     const TABLE_TEAMS = 'tx_cfcleague_teams';
 
@@ -85,7 +96,7 @@ class Tx_Dflsync_Service_ProfileImport
             $this->refreshTeam($team);
         }
         $this->stats['total']['time'] = intval(microtime(true) - $start).'s';
-        tx_rnbase_util_Logger::info('Update profiles finished!', 'dflsync', [
+        Logger::info('Update profiles finished!', 'dflsync', [
             'stats' => $this->stats,
         ]);
     }
@@ -97,7 +108,7 @@ class Tx_Dflsync_Service_ProfileImport
     {
         $dflId = $team->getExtid();
         if (!$dflId) {
-            tx_rnbase_util_Logger::notice('Ignore team '.$team->getNameShort().' ('.$team->getUid().') without extid!', 'dflsync');
+            Logger::notice('Ignore team '.$team->getNameShort().' ('.$team->getUid().') without extid!', 'dflsync');
 
             return;
         }
@@ -109,7 +120,7 @@ class Tx_Dflsync_Service_ProfileImport
         $pid = null != $club && $club->isFavorite() ? $this->pageOwn : $this->pageOther;
 
         if (0 == $pid) {
-            tx_rnbase_util_Logger::notice('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No PID configured.', 'dflsync', [
+            Logger::notice('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No PID configured.', 'dflsync', [
                 'pageOwn' => $this->pageOwn,
                 'pageOther' => $this->pageOther,
             ]);
@@ -123,7 +134,6 @@ class Tx_Dflsync_Service_ProfileImport
         if (!empty($data[self::TABLE_PROFILES])) {
             $this->persist($data);
         }
-        // tx_rnbase_util_Debug::debug($data, $team->getNameShort().' ' .__FILE__.' : '.__LINE__); // TODO: remove me
     }
 
     /**
@@ -141,7 +151,7 @@ class Tx_Dflsync_Service_ProfileImport
 //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'teamofficial');
         if (!file_exists($feedFile)) {
-            tx_rnbase_util_Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No officials feed file found.', 'dflsync', [
+            Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No officials feed file found.', 'dflsync', [
                 'file' => $feedFile,
             ]);
 
@@ -208,7 +218,7 @@ class Tx_Dflsync_Service_ProfileImport
 //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_player.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'player');
         if (!file_exists($feedFile)) {
-            tx_rnbase_util_Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No player feed file found.', 'dflsync', [
+            Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No player feed file found.', 'dflsync', [
                 'file' => $feedFile,
             ]);
 
@@ -264,7 +274,7 @@ class Tx_Dflsync_Service_ProfileImport
      */
     protected function findPlayerByDflId($dflId)
     {
-        $srv = tx_cfcleague_util_ServiceRegistry::getProfileService();
+        $srv = ServiceRegistry::getProfileService();
         $fields = [];
         $fields['PROFILE.EXTID'][OP_EQ_NOCASE] = $dflId;
         $options = [
@@ -284,7 +294,7 @@ class Tx_Dflsync_Service_ProfileImport
     {
         $reader = new XMLReader();
         if (!$reader->open($file, 'UTF-8', 0)) {
-            tx_rnbase_util_Logger::fatal('Error reading profile feed '.$file.'!', 'dflsync');
+            Logger::fatal('Error reading profile feed '.$file.'!', 'dflsync');
             throw new Exception('Error reading profile feed '.$file.' !');
         }
         while ($reader->read() && 'Object' !== $reader->name);
@@ -296,8 +306,8 @@ class Tx_Dflsync_Service_ProfileImport
             if (false === $node || !$node instanceof DOMNode) {
                 throw new LogicException('The current DOMNode Object is invalid. File ['.$file.'] Last error: '.print_r(error_get_last(), true), 1353542747);
             }
-            /* @var $envNode tx_rnbase_util_XmlElement */
-            $envNode = simplexml_import_dom($doc->importNode($node, true), 'tx_rnbase_util_XmlElement');
+            /** @var XmlElement $envNode */
+            $envNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
             // Es interessieren hier nur die Daten ohne das Attribut ValidTo
             if (!$envNode->hasValueForPath('ValidTo')) {
                 $profile = [];
@@ -324,7 +334,7 @@ class Tx_Dflsync_Service_ProfileImport
     {
         $start = microtime(true);
 
-        $tce = Tx_Rnbase_Database_Connection::getInstance()->getTCEmain($data);
+        $tce = Connection::getInstance()->getTCEmain($data);
         $tce->process_datamap();
 
         $this->stats['chunks'][]['time'] = intval(microtime(true) - $start).'s';
