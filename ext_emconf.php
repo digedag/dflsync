@@ -24,7 +24,7 @@ $EM_CONF[$_EXTKEY] = [
     'author_company' => 'System 25',
     'constraints' => [
         'depends' => [
-            'typo3' => '8.7.99-12.4.99',
+            'typo3' => '9.5.0-12.4.99',
             'rn_base' => '1.18.0-0.0.0',
             'cfc_league' => '1.11.0-0.0.0',
         ],

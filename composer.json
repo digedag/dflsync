@@ -22,7 +22,7 @@
 		"issues" : "https://github.com/digedag/dflsync/issues"
 	},
 	"require" : {
-		"typo3/cms-core": "^8.7 || ^9.5 || ^10.4 || ^11.5.0 || ^12.4",
+		"typo3/cms-core": "^9.5 || ^10.4 || ^11.5.0 || ^12.4",
 		"digedag/cfc-league" : "^1.11.0",
 		"digedag/rn-base" : "^1.17"
 	},

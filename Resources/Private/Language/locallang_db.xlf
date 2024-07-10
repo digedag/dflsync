@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" data="2024-07-10T20-07-54" product-name="zsb">
+		<header/>
+		<body>
+			<trans-unit id="scheduler_syncTask_field_competition" xml:space="preserve">
+				<source>UID des Wettbewerbs</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_fileClub" xml:space="preserve">
+				<source>DFL-Datei Clubs</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_fileSaison" xml:space="preserve">
+				<source>DFL-Datei Saison</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pathMatchInfo" xml:space="preserve">
+				<source>Verzeichnis Spielinformationen</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pathMatchStats" xml:space="preserve">
+				<source>Verzeichnis Spielstatistik</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pathClubInfo" xml:space="preserve">
+				<source>Verzeichnis Vereinsinformationen</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pidOwn" xml:space="preserve">
+				<source>SysFolder Personen eigener Verein</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pidOther" xml:space="preserve">
+				<source>SysFolder Personen anderer Vereine</source>
+			</trans-unit>
+		</body>
+	</file>
+</xliff>

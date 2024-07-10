@@ -5,6 +5,7 @@ namespace System25\T3sports\DflSync\Scheduler;
 use TYPO3\CMS\Scheduler\AbstractAdditionalFieldProvider;
 use TYPO3\CMS\Scheduler\Controller\SchedulerModuleController;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
+use TYPO3\CMS\Scheduler\Task\Enumeration\Action;
 
 /***************************************************************
  *  Copyright notice
@@ -42,7 +43,7 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
      *
      * @param array $taskInfo reference to the array containing the info used in the add/edit form
      * @param ProfileTask $task when editing, reference to the current task object. Null when adding.
-     * @param tx_scheduler_Module $parentObject reference to the calling object (Scheduler's BE module)
+     * @param SchedulerModuleController $schedulerModule reference to the calling object (Scheduler's BE module)
      *
      * @return array Array containg all the information pertaining to the additional fields
      *         The array is multidimensional, keyed to the task class name and each field's id
@@ -52,15 +53,16 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
      *         ['cshKey'] => The CSH key for the field
      *         ['cshLabel'] => The code of the CSH label
      */
-    public function getAdditionalFields(array &$taskInfo, $task, SchedulerModuleController $parentObject)
+    public function getAdditionalFields(array &$taskInfo, $task, SchedulerModuleController $schedulerModule)
     {
+        $currentSchedulerModuleAction = $schedulerModule->getCurrentAction();
         // Initialize extra field value
-        if (!array_key_exists(FIELD_PATH, $taskInfo) || empty($taskInfo[FIELD_PATH])) {
+        if (!array_key_exists(self::FIELD_COMPETITION, $taskInfo) || empty($taskInfo[self::FIELD_COMPETITION])) {
             $taskInfo[self::FIELD_COMPETITION] = '';
             $taskInfo[self::FIELD_PATH_CLUB_INFO] = '';
             $taskInfo[self::FIELD_PID_OWN] = '';
             $taskInfo[self::FIELD_PID_OTHER] = '';
-            if ('edit' == $parentObject->CMD) {
+            if ($currentSchedulerModuleAction->equals(Action::EDIT)) {
                 // Editing a task, set to internal value if data was not submitted already
                 $taskInfo[self::FIELD_COMPETITION] = $task->getCompetition();
                 $taskInfo[self::FIELD_PATH_CLUB_INFO] = $task->getPathClubInfo();
@@ -86,7 +88,7 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
         $fieldCode = '<input type="text" name="tx_scheduler['.$fieldName.']" id="'.$fieldID.'" value="'.$taskInfo[$fieldName].'" size="'.$size.'" />';
         $additionalFields[$fieldID] = [
             'code' => $fieldCode,
-            'label' => 'LLL:EXT:dflsync/Resources/Private/Language/locallang_db.xml:scheduler_syncTask_field_'.$fieldName,
+            'label' => 'LLL:EXT:dflsync/Resources/Private/Language/locallang_db.xlf:scheduler_syncTask_field_'.$fieldName,
             'cshKey' => '_MOD_web_txschedulerM1',
             // 'cshLabel' => $fieldID
         ];
