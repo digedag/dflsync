@@ -57,7 +57,7 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
     {
         $currentSchedulerModuleAction = $schedulerModule->getCurrentAction();
         // Initialize extra field value
-        if (!array_key_exists(self::FIELD_COMPETITION, $taskInfo) || empty($taskInfo[self::FIELD_COMPETITION])) {
+        if (!array_key_exists(self::FIELD_PATH_CLUB_INFO, $taskInfo) || empty($taskInfo[self::FIELD_PATH_CLUB_INFO])) {
             $taskInfo[self::FIELD_COMPETITION] = '';
             $taskInfo[self::FIELD_PATH_CLUB_INFO] = '';
             $taskInfo[self::FIELD_PID_OWN] = '';
@@ -73,7 +73,7 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
 
         $additionalFields = [];
         $this->makeField($additionalFields, self::FIELD_COMPETITION, $taskInfo, 10);
-        $this->makeField($additionalFields, self::FIELD_PATH_CLUB_INFO, $taskInfo, 40);
+        $this->makeField($additionalFields, self::FIELD_PATH_CLUB_INFO, $taskInfo, 80);
         $this->makeField($additionalFields, self::FIELD_PID_OWN, $taskInfo, 10);
         $this->makeField($additionalFields, self::FIELD_PID_OTHER, $taskInfo, 10);
 

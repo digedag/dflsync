@@ -24,7 +24,7 @@
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathClubInfo" xml:space="preserve">
-				<source>Verzeichnis Vereinsinformationen</source>
+				<source>Pfad zur Datei mit Vereinsinformationen (DFL_01_05_masterdata_*_[teamofficial|player].xml)</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pidOwn" xml:space="preserve">

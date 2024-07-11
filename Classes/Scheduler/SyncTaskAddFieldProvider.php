@@ -59,7 +59,7 @@ class SyncTaskAddFieldProvider extends AbstractAdditionalFieldProvider
     {
         $currentSchedulerModuleAction = $schedulerModule->getCurrentAction();
         // Initialize extra field value
-        if (!array_key_exists(self::FIELD_COMPETITION, $taskInfo) || empty($taskInfo[self::FIELD_COMPETITION])) {
+        if (!array_key_exists(self::FIELD_PATH_MATCH_INFO, $taskInfo) || empty($taskInfo[self::FIELD_PATH_MATCH_INFO])) {
             if ($currentSchedulerModuleAction->equals(Action::ADD)) {
                 // New task
                 $taskInfo[self::FIELD_COMPETITION] = '';
