@@ -6,8 +6,11 @@ use Exception;
 use Sys25\RnBase\Configuration\Processor;
 use Sys25\RnBase\Utility\Logger;
 use Sys25\RnBase\Utility\Misc;
-use Sys25\T3sports\DflSync\Service\ProfileImport;
+use System25\T3sports\DflSync\Service\ProfileImport;
 use System25\T3sports\Model\Competition;
+use Throwable;
+use tx_rnbase;
+use TYPO3\CMS\Scheduler\FailedExecutionException;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
 
 /***************************************************************
@@ -63,9 +66,9 @@ class ProfileTask extends AbstractTask
         $success = true;
 
         try {
-            $sync = \tx_rnbase::makeInstance(ProfileImport::class);
+            $sync = tx_rnbase::makeInstance(ProfileImport::class);
             $sync->doImport($this->competition, $this->pathClubInfo, $this->pidOwn, $this->pidOther);
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             Logger::fatal('Task failed!', 'dflsync', [
                 'Exception' => $e->getMessage(),
             ]);
@@ -74,7 +77,7 @@ class ProfileTask extends AbstractTask
             if ($addr = Processor::getExtensionCfgValue('rn_base', 'sendEmailOnException')) {
                 Misc::sendErrorMail($addr, 'Tx_Dflsync_Scheduler_SyncTask', $e);
             }
-            $success = false;
+            throw new FailedExecutionException(sprintf('DFL ProfileTask (%d) failed with message %s at %s:%d', $this->getTaskUid(), $e->getMessage(), $e->getFile(), $e->getLine()));
         }
 
         return $success;
@@ -98,7 +101,7 @@ class ProfileTask extends AbstractTask
     public function setCompetition($val)
     {
         if (!intval($val)) {
-            throw new \Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
+            throw new Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
         }
         // else
         $this->competition = intval($val);
@@ -148,7 +151,7 @@ class ProfileTask extends AbstractTask
         $compName = '';
 
         if ($compUid = $this->getCompetition()) {
-            $competition = \tx_rnbase::makeInstance(Competition::class, $compUid);
+            $competition = tx_rnbase::makeInstance(Competition::class, $compUid);
             $compName = $competition->isValid() ? $competition->getName() : '[invalid!]';
         }
 

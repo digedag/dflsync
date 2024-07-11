@@ -6,8 +6,11 @@ use Exception;
 use Sys25\RnBase\Configuration\Processor;
 use Sys25\RnBase\Utility\Logger;
 use Sys25\RnBase\Utility\Misc;
-use Sys25\T3sports\DflSync\Service\Sync;
+use System25\T3sports\DflSync\Service\Sync;
 use System25\T3sports\Model\Competition;
+use Throwable;
+use tx_rnbase;
+use TYPO3\CMS\Scheduler\FailedExecutionException;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
 
 /***************************************************************
@@ -58,17 +61,16 @@ class SyncTask extends AbstractTask
         $success = true;
 
         try {
-            $sync = \tx_rnbase::makeInstance(Sync::class);
+            $sync = tx_rnbase::makeInstance(Sync::class);
             $sync->doSync($this->competition, $this->fileSaison, $this->fileClub, $this->pathMatchStats, $this->pathMatchInfo);
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             Logger::fatal('Task failed!', 'dflsync', ['Exception' => $e->getMessage()]);
             // Da die Exception gefangen wird, würden die Entwickler keine Mail bekommen
             // also machen wir das manuell
             if ($addr = Processor::getExtensionCfgValue('rn_base', 'sendEmailOnException')) {
-                \tx_rnbase::load('tx_rnbase_util_Misc');
                 Misc::sendErrorMail($addr, 'Tx_Dflsync_Scheduler_SyncTask', $e);
             }
-            $success = false;
+            throw new FailedExecutionException(sprintf('DFL SyncTask (%d) failed with message %s at %s:%d', $this->getTaskUid(), $e->getMessage(), $e->getFile(), $e->getLine()));
         }
 
         return $success;
@@ -92,7 +94,7 @@ class SyncTask extends AbstractTask
     public function setCompetition($val)
     {
         if (!intval($val)) {
-            throw new \Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
+            throw new Exception('tx_dflsync_scheduler_SyncTask->setCompetition(): Invalid Competition given!');
         }
         // else
         $this->competition = intval($val);
@@ -156,7 +158,7 @@ class SyncTask extends AbstractTask
         $compName = '';
 
         if ($compUid = $this->getCompetition()) {
-            $competition = \tx_rnbase::makeInstance(Competition::class, $compUid);
+            $competition = tx_rnbase::makeInstance(Competition::class, $compUid);
             $compName = $competition->isValid() ? $competition->getName() : '[invalid!]';
         }
 

@@ -1,7 +1,11 @@
 <?php
 
-namespace Sys25\T3sports\DflSync\Service;
+namespace System25\T3sports\DflSync\Service;
 
+use DOMDocument;
+use DOMNode;
+use Exception;
+use LogicException;
 use Sys25\RnBase\Database\Connection;
 use Sys25\RnBase\Utility\Files;
 use Sys25\RnBase\Utility\Logger;
@@ -10,6 +14,7 @@ use Sys25\RnBase\Utility\XmlElement;
 use System25\T3sports\Model\Competition;
 use System25\T3sports\Utility\ServiceRegistry;
 use tx_rnbase;
+use XMLReader;
 
 /***************************************************************
  *  Copyright notice
@@ -80,15 +85,19 @@ class Sync
 
         $fileSaison = $this->getFileName($fileSaison);
         $fileClub = $this->getFileName($fileClub);
-        $competition = \tx_rnbase::makeInstance(Competition::class, $competitionUid);
+        $competition = tx_rnbase::makeInstance(Competition::class, $competitionUid);
         $this->pageUid = $competition->getProperty('pid');
         $this->initMatches($competition);
+        $externalCompetitionId = $competition->getProperty('extid');
+        if (empty($externalCompetitionId)) {
+            throw new Exception(sprintf('Competition with uid %d must provide an external competition id (extid)', $competition->getUid()));
+        }
 
         // Dateien lesen
-        $reader = new \XMLReader();
+        $reader = new XMLReader();
         if (!$reader->open($fileSaison, 'UTF-8', 0)) {
             Logger::fatal('Error reading match schedule xml string!', 'dflsync', $fileSaison);
-            throw new \Exception('Error reading xml string!');
+            throw new Exception('Error reading xml string!');
         }
         while ($reader->read() && 'Fixture' !== $reader->name) {
         }
@@ -118,19 +127,19 @@ class Sync
             self::TABLE_GAMES => [],
             self::TABLE_COMPETITION => [],
         ];
-        $doc = new \DOMDocument();
+        $doc = new DOMDocument();
         while ('Fixture' === $reader->name) {
             try {
                 $node = $reader->expand();
-                if (false === $node || !$node instanceof \DOMNode) {
-                    throw new \LogicException('The current DOMNode Fixture is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
+                if (false === $node || !$node instanceof DOMNode) {
+                    throw new LogicException('The current DOMNode Fixture is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
                 }
                 /** @var XmlElement $matchNode */
                 $matchNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
                 // Es interessieren hier nur die Spiele ohne das Attribut ValidTo
                 $dflCompetitionId = $matchNode->getValueFromPath('CompetitionId');
-                // TODO: das muss als parameter kommen... jetzt fix 2. BL
-                if ('DFL-COM-000002' == $dflCompetitionId && !$matchNode->hasValueForPath('ValidTo')) {
+                // Die extId im Wettbewerb muss zur ID im XML-File passen.
+                if ($externalCompetitionId == $dflCompetitionId && !$matchNode->hasValueForPath('ValidTo')) {
                     ++$cnt;
                     $this->handleMatch($data, $matchNode, $competition, $dflCompetitionId, $info);
                     if (0 == $cnt % 40) {
@@ -141,7 +150,7 @@ class Sync
                     }
                 }
                 // else: das Spiel ist nicht relevant
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Logger::fatal('Error reading Fixture!', 'dflsync', [
                     'msg' => $e->getMessage(),
                 ]);
@@ -229,28 +238,29 @@ class Sync
     {
         $prefix = 'DFL_03_03_events_matchstatistics_periods_'.$dflCompetitionId.'_';
         $statsFile = Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
+        $statsFile = Files::getFileAbsFileName($statsFile, false);
         if (!file_exists($statsFile)) {
             // tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without stats file!', 'dflsync', array('file'=>$statsFile));
             return;
         }
 
         // Dateien lesen
-        $reader = new \XMLReader();
+        $reader = new XMLReader();
         if (!$reader->open($statsFile, 'UTF-8', 0)) {
             Logger::fatal('Error reading match stats '.$dflId.'.xml file!', 'dflsync');
-            throw new \Exception('Error reading match statistics '.$dflId.'.xml!');
+            throw new Exception('Error reading match statistics '.$dflId.'.xml!');
         }
         while ($reader->read() && 'MatchStatistic' !== $reader->name) {
         }
 
-        $doc = new \DOMDocument();
+        $doc = new DOMDocument();
         $found = 0;
         while ('MatchStatistic' === $reader->name && $found < 2) {
             // Wir müssen den Tag mit dem Scope match suchen
 
             $node = $reader->expand();
-            if (false === $node || !$node instanceof \DOMNode) {
-                throw new \LogicException('The current DOMNode MatchStatistic is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353592747);
+            if (false === $node || !$node instanceof DOMNode) {
+                throw new LogicException('The current DOMNode MatchStatistic is invalid. File ['.$statsFile.'] Last error: '.print_r(error_get_last(), true), 1353592747);
             }
             /** @var XmlElement $envNode */
             $envNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
@@ -290,26 +300,27 @@ class Sync
     {
         $prefix = 'DFL_02_01_matchinformation_'.$dflCompetitionId.'_';
         $infoFile = Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
+        $infoFile = Files::getFileAbsFileName($infoFile, false);
         if (!file_exists($infoFile)) {
             // Logger::notice('Ignore match ('.$dflId.') without matchinfo file!', 'dflsync', array('file'=>$infoFile));
             return;
         }
 
         // Dateien lesen
-        $reader = new \XMLReader();
+        $reader = new XMLReader();
         if (!$reader->open($infoFile, 'UTF-8', 0)) {
             Logger::fatal('Error reading match info '.$dflId.'.xml file!', 'dflsync');
-            throw new \Exception('Error reading match information '.$dflId.'.xml!');
+            throw new Exception('Error reading match information '.$dflId.'.xml!');
         }
         while ($reader->read() && 'Environment' !== $reader->name) {
         }
 
-        $doc = new \DOMDocument();
+        $doc = new DOMDocument();
         if ('Environment' === $reader->name) {
             // Hier wird nur ein Tag ausgelesen
             $node = $reader->expand();
-            if (false === $node || !$node instanceof \DOMNode) {
-                throw new \LogicException('The current DOMNode Environment is invalid. File ['.$infoFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
+            if (false === $node || !$node instanceof DOMNode) {
+                throw new LogicException('The current DOMNode Environment is invalid. File ['.$infoFile.'] Last error: '.print_r(error_get_last(), true), 1353593847);
             }
             /** @var XmlElement $envNode */
             $envNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
@@ -326,7 +337,7 @@ class Sync
      *
      * @param string $dflId
      * @param [] $data
-     * @param tx_cfcleague_models_Competition $competition
+     * @param Competition $competition
      *
      * @return string
      */
@@ -345,8 +356,8 @@ class Sync
                 'what' => 'uid',
             ];
             $ret = $teamSrv->searchTeams($fields, $options);
-            if (!empty($ret)) {
-                $this->teamMap[$dflId] = $ret[0]['uid'];
+            if (!$ret->isEmpty()) {
+                $this->teamMap[$dflId] = $ret->first()['uid'];
                 $uid = $this->teamMap[$dflId];
             } else {
                 // In uid steht jetzt NEW_
@@ -375,7 +386,7 @@ class Sync
      *
      * @param mixed $teamUid
      * @param array $data
-     * @param tx_cfcleague_models_Competition $competition
+     * @param Competition $competition
      */
     private function addTeamToCompetition($teamUid, &$data, $competition)
     {
@@ -407,7 +418,7 @@ class Sync
         if (array_key_exists($dflId, $this->teamData)) {
             return $this->teamData[$dflId];
         }
-        throw new \Exception('Team not found: '.$dflId);
+        throw new Exception('Team not found: '.$dflId);
     }
 
     /**
@@ -415,25 +426,25 @@ class Sync
      *
      * @param string $fileClub
      *
-     * @throws \Exception
-     * @throws \LogicException
+     * @throws Exception
+     * @throws LogicException
      */
     private function initXmlTeams($fileClub)
     {
-        $reader = new \XMLReader();
+        $reader = new XMLReader();
         if (!$reader->open($fileClub, 'UTF-8', 0)) {
             Logger::fatal('Error reading team data xml string!', 'dflsync', $fileClub);
-            throw new \Exception('Error reading xml string!');
+            throw new Exception('Error reading xml string!');
         }
         while ($reader->read() && 'Club' !== $reader->name) {
         }
 
-        $doc = new \DOMDocument();
+        $doc = new DOMDocument();
         while ('Club' === $reader->name) {
             try {
                 $node = $reader->expand();
-                if (false === $node || !$node instanceof \DOMNode) {
-                    throw new \LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
+                if (false === $node || !$node instanceof DOMNode) {
+                    throw new LogicException('The current DOMNode is invalid. Last error: '.print_r(error_get_last(), true), 1353594857);
                 }
                 /** @var XmlElement $clubNode */
                 $clubNode = simplexml_import_dom($doc->importNode($node, true), XmlElement::class);
@@ -459,7 +470,7 @@ class Sync
                         'yearestablished' => $clubNode->getValueFromPath('Founded'),
                     ];
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Logger::fatal('Error reading Fixture!', 'dflsync', $e->getMessage());
             }
             $reader->next('Club');
@@ -496,10 +507,10 @@ class Sync
     {
         $filename = Files::getFileAbsFileName($filename, false);
         if (!is_file($filename)) {
-            throw new \Exception('File not found: '.$filename);
+            throw new Exception('File not found: '.$filename);
         }
         if (!@is_readable($filename)) {
-            throw new \Exception('File is not readable: '.$filename);
+            throw new Exception('File is not readable: '.$filename);
         }
 
         return $filename;

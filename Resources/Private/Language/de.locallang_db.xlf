@@ -16,11 +16,11 @@
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathMatchInfo" xml:space="preserve">
-				<source>Verzeichnis Spielinformationen</source>
+				<source>Verzeichnis Spielinformationen (enthält DFL_03_03_events_matchstatistics_periods_*.xml)</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathMatchStats" xml:space="preserve">
-				<source>Verzeichnis Spielstatistik</source>
+				<source>Verzeichnis Spielstatistik (enthält DFL_02_01_matchinformation_*.xml)</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathClubInfo" xml:space="preserve">

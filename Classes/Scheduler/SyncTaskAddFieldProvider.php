@@ -94,7 +94,7 @@ class SyncTaskAddFieldProvider extends AbstractAdditionalFieldProvider
         return $additionalFields;
     }
 
-    private function makeField(&$additionalFields, $fieldName, $taskInfo, $size = 40)
+    private function makeField(&$additionalFields, $fieldName, $taskInfo, $size = 80)
     {
         // Write the code for the field
         $fieldID = 'field_'.$fieldName;
