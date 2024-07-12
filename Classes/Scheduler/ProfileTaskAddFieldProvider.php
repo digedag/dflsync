@@ -2,6 +2,7 @@
 
 namespace System25\T3sports\DflSync\Scheduler;
 
+use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Scheduler\AbstractAdditionalFieldProvider;
 use TYPO3\CMS\Scheduler\Controller\SchedulerModuleController;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
@@ -72,20 +73,24 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
         }
 
         $additionalFields = [];
-        $this->makeField($additionalFields, self::FIELD_COMPETITION, $taskInfo, 10);
-        $this->makeField($additionalFields, self::FIELD_PATH_CLUB_INFO, $taskInfo, 80);
-        $this->makeField($additionalFields, self::FIELD_PID_OWN, $taskInfo, 10);
-        $this->makeField($additionalFields, self::FIELD_PID_OTHER, $taskInfo, 10);
+        $this->makeField($additionalFields, self::FIELD_COMPETITION, $taskInfo, '', 10);
+        $this->makeField($additionalFields, self::FIELD_PATH_CLUB_INFO, $taskInfo, 'comment', 80);
+        $this->makeField($additionalFields, self::FIELD_PID_OWN, $taskInfo, '', 10);
+        $this->makeField($additionalFields, self::FIELD_PID_OTHER, $taskInfo, '', 10);
 
         return $additionalFields;
     }
 
-    private function makeField(&$additionalFields, $fieldName, $taskInfo, $size = 30)
+    private function makeField(&$additionalFields, $fieldName, $taskInfo, $comment, $size = 30)
     {
         // Write the code for the field
         $fieldID = 'field_'.$fieldName;
         // Note: Name qualifier MUST be "tx_scheduler" as the tx_scheduler's BE module is used!
-        $fieldCode = '<input type="text" name="tx_scheduler['.$fieldName.']" id="'.$fieldID.'" value="'.$taskInfo[$fieldName].'" size="'.$size.'" />';
+        $fieldCode = '<input class="form-control form-control-clearable t3js-clearable" type="text" name="tx_scheduler['.$fieldName.']" id="'.$fieldID.'" value="'.$taskInfo[$fieldName].'" size="'.$size.'" />';
+        if ($comment) {
+            $commentLabel = sprintf('LLL:EXT:dflsync/Resources/Private/Language/locallang_db.xlf:scheduler_syncTask_field_%s_%s', $fieldName, $comment);
+            $fieldCode = sprintf('<p>%s</p>%s', $this->getLanguageService()->sL($commentLabel), $fieldCode);
+        }
         $additionalFields[$fieldID] = [
             'code' => $fieldCode,
             'label' => 'LLL:EXT:dflsync/Resources/Private/Language/locallang_db.xlf:scheduler_syncTask_field_'.$fieldName,
@@ -125,5 +130,15 @@ class ProfileTaskAddFieldProvider extends AbstractAdditionalFieldProvider
         $task->setPathClubInfo($submittedData[self::FIELD_PATH_CLUB_INFO]);
         $task->setPidOwn($submittedData[self::FIELD_PID_OWN]);
         $task->setPidOther($submittedData[self::FIELD_PID_OTHER]);
+    }
+
+    /**
+     * Returns the Language Service.
+     *
+     * @return LanguageService
+     */
+    protected function getLanguageService()
+    {
+        return $GLOBALS['LANG'];
     }
 }

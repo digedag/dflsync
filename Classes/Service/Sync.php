@@ -238,7 +238,9 @@ class Sync
     {
         $prefix = 'DFL_03_03_events_matchstatistics_periods_'.$dflCompetitionId.'_';
         $statsFile = Files::join($this->pathMatchStats, $prefix.$dflId.'.xml');
-        $statsFile = Files::getFileAbsFileName($statsFile, false);
+        if (!Strings::isFirstPartOfStr($statsFile, '/')) {
+            $statsFile = Files::getFileAbsFileName($statsFile, false);
+        }
         if (!file_exists($statsFile)) {
             // tx_rnbase_util_Logger::notice('Ignore match ('.$dflId.') without stats file!', 'dflsync', array('file'=>$statsFile));
             return;
@@ -300,7 +302,10 @@ class Sync
     {
         $prefix = 'DFL_02_01_matchinformation_'.$dflCompetitionId.'_';
         $infoFile = Files::join($this->pathMatchInfo, $prefix.$dflId.'.xml');
-        $infoFile = Files::getFileAbsFileName($infoFile, false);
+        if (!Strings::isFirstPartOfStr($infoFile, '/')) {
+            $infoFile = Files::getFileAbsFileName($infoFile, false);
+        }
+
         if (!file_exists($infoFile)) {
             // Logger::notice('Ignore match ('.$dflId.') without matchinfo file!', 'dflsync', array('file'=>$infoFile));
             return;
@@ -505,7 +510,10 @@ class Sync
 
     private function getFileName($filename)
     {
-        $filename = Files::getFileAbsFileName($filename, false);
+        if (!Strings::isFirstPartOfStr($filename, '/')) {
+            $filename = Files::getFileAbsFileName($filename, false);
+        }
+
         if (!is_file($filename)) {
             throw new Exception('File not found: '.$filename);
         }

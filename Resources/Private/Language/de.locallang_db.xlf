@@ -8,7 +8,7 @@
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_fileClub" xml:space="preserve">
-				<source>DFL-Datei Clubs</source>
+				<source>DFL-Datei Clubs (DFL_01_04_masterdata_clubs_DFL_*.xml)</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_fileSaison" xml:space="preserve">
@@ -16,15 +16,19 @@
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathMatchInfo" xml:space="preserve">
-				<source>Verzeichnis Spielinformationen (enthält DFL_03_03_events_matchstatistics_periods_*.xml)</source>
+				<source>Verzeichnis Spielinformationen (enthält DFL_02_01_matchinformation_*.xml)</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathMatchStats" xml:space="preserve">
-				<source>Verzeichnis Spielstatistik (enthält DFL_02_01_matchinformation_*.xml)</source>
+				<source>Verzeichnis Spielstatistik (enthält DFL_03_03_events_matchstatistics_periods_*.xml)</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathClubInfo" xml:space="preserve">
 				<source>Pfad zur Datei mit Vereinsinformationen (DFL_01_05_masterdata_*_[teamofficial|player].xml)</source>
+				<target/>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pathClubInfo_comment" xml:space="preserve">
+				<source>Unbedingt auf die Platzhalter achten: path/to/folder/DFL_01_05_masterdata_%s_DFL-SEA-0001K7_%s.xml</source>
 				<target/>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pidOwn" xml:space="preserve">

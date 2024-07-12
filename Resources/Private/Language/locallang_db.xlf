@@ -4,28 +4,31 @@
 		<header/>
 		<body>
 			<trans-unit id="scheduler_syncTask_field_competition" xml:space="preserve">
-				<source>UID des Wettbewerbs</source>
+				<source>UID of T3sports competition</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_fileClub" xml:space="preserve">
-				<source>DFL-Datei Clubs</source>
+				<source>Path to DFL-file of clubs (DFL_01_04_masterdata_clubs_DFL_*.xml)</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_fileSaison" xml:space="preserve">
-				<source>DFL-Datei Saison</source>
+				<source>Path to DFL-file Saison (DFL_01_06_masterdata_fixtures_*.xml)</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathMatchInfo" xml:space="preserve">
-				<source>Verzeichnis Spielinformationen</source>
+				<source>Folder for fixture data (contains DFL_02_01_matchinformation_*.xml)</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathMatchStats" xml:space="preserve">
-				<source>Verzeichnis Spielstatistik</source>
+				<source>Folder for fixture statistics (contains DFL_03_03_events_matchstatistics_periods_*.xml)</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pathClubInfo" xml:space="preserve">
-				<source>Verzeichnis Vereinsinformationen</source>
+				<source>Path to file with club information (DFL_01_05_masterdata_*_[teamofficial|player].xml)</source>
+			</trans-unit>
+			<trans-unit id="scheduler_syncTask_field_pathClubInfo_comment" xml:space="preserve">
+				<source>Keep eyes on the placeholder like this: path/to/folder/DFL_01_05_masterdata_%s_DFL-SEA-0001K7_%s.xml</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pidOwn" xml:space="preserve">
-				<source>SysFolder Personen eigener Verein</source>
+				<source>SysFolder with profiles of own club</source>
 			</trans-unit>
 			<trans-unit id="scheduler_syncTask_field_pidOther" xml:space="preserve">
-				<source>SysFolder Personen anderer Vereine</source>
+				<source>SysFolder with profiles of other clubs</source>
 			</trans-unit>
 		</body>
 	</file>

@@ -9,6 +9,7 @@ use LogicException;
 use Sys25\RnBase\Database\Connection;
 use Sys25\RnBase\Utility\Files;
 use Sys25\RnBase\Utility\Logger;
+use Sys25\RnBase\Utility\Strings;
 use Sys25\RnBase\Utility\XmlElement;
 use System25\T3sports\Utility\ServiceRegistry;
 use tx_rnbase;
@@ -151,7 +152,10 @@ class ProfileImport
         //         $prefix = 'DFL_01_05_masterdata_';
         //         $feedFile = tx_rnbase_util_Files::join($this->pathClubInfo, $prefix . $dflId . '_teamofficial.xml');
         $feedFile = sprintf($this->pathClubInfo, $dflId, 'teamofficial');
-        $feedFile = Files::getFileAbsFileName($feedFile, false);
+        if (!Strings::isFirstPartOfStr($feedFile, '/')) {
+            $feedFile = Files::getFileAbsFileName($feedFile, false);
+        }
+
         if (!file_exists($feedFile)) {
             Logger::warn('Ignore team '.$team->getNameShort().' ('.$team->getUid().')! No officials feed file found.', 'dflsync', [
                 'file' => $feedFile,

@@ -99,7 +99,7 @@ class SyncTaskAddFieldProvider extends AbstractAdditionalFieldProvider
         // Write the code for the field
         $fieldID = 'field_'.$fieldName;
         // Note: Name qualifier MUST be "tx_scheduler" as the tx_scheduler's BE module is used!
-        $fieldCode = '<input type="text" name="tx_scheduler['.$fieldName.']" id="'.$fieldID.'" value="'.$taskInfo[$fieldName].'" size="'.$size.'" />';
+        $fieldCode = '<input class="form-control form-control-clearable t3js-clearable" type="text" name="tx_scheduler['.$fieldName.']" id="'.$fieldID.'" value="'.$taskInfo[$fieldName].'" size="'.$size.'" />';
         $additionalFields[$fieldID] = [
             'code' => $fieldCode,
             'label' => 'LLL:EXT:dflsync/Resources/Private/Language/locallang_db.xlf:scheduler_syncTask_field_'.$fieldName,
